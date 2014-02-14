@@ -5,17 +5,10 @@ class FileTreeEngine extends FileEngine {
 
    public function delete($key) {
 
-      // $key = $this->key($key);
-      // echo 'Cache: ', CACHE ."\n";
-      // echo 'Path: ' . $this->settings['path'] ."\n";
-      // echo 'Prefix: ' . $this->settings['prefix'] ."\n";
-      // echo 'Key: ' . $key ."\n";
-      // var_dump(glob($this->settings['path'] . $key));
       $keys = glob($this->settings['path'] . $this->key($key));
       foreach ( $keys as $k ) {
          $f = new SplFileInfo($k);
          parent::delete($f->getFilename());
-         // echo $f->getFilename() . "\n";
       }
 
    }
