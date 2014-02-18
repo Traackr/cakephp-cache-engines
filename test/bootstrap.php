@@ -17,7 +17,9 @@ require_once(dirname(__FILE__) . '/../vendor/cakephp/cakephp/lib/Cake/Cache/Engi
 
 // Load all engines
 require_once(dirname(__FILE__) . '/../src/Engines.php');
+// Load mock classes for unit tests
+require_once(dirname(__FILE__) . '/EnginesMock.php');
 
-// SOme constants required by CakePHP
+// Some constants required by CakePHP
 define("CACHE", dirname(__FILE__). '/tmp');
 define("DS", DIRECTORY_SEPARATOR);

@@ -2,20 +2,23 @@
 
 require_once(dirname(__FILE__) . '/../src/Engines.php');
 
+
 class FallbackEngineTest extends PHPUnit_Framework_TestCase {
 
-   private $engine = 'Fallback';
+   private $cache = 'Fallback';
 
    public function setUp() {
 
-      // $factory          = new \M6Web\Component\RedisMock\RedisMockFactory();
-      // $myRedisMockClass = $factory->getAdapterClass('Predis\Client', true);
+      $factory = new \M6Web\Component\RedisMock\RedisMockFactory();
+      $redisMock = $factory->getAdapter('Predis\Client', true);
 
-      Cache::config($this->engine, array(
-         'engine' => 'Fallback',
-         'primary' => array('engine' => 'RedisTree', 'duration' => 60),
+      Cache::config($this->cache, array(
+         'engine' => 'FallbackMock',
+         'primary' => array('engine' => 'RedisTreeMock', 'duration' => 60),
          'secondary' => array('engine' => 'FileTree', 'duration' => 60)
       ));
+
+       CacheMock::setEngine('primary', $redisMock);
 
    } // End function setUp()
 
@@ -26,14 +29,25 @@ class FallbackEngineTest extends PHPUnit_Framework_TestCase {
    } // End functiuon tearDown()
 
 
-   function testRead() {
+   function testFallback() {
 
-      $key = 'FallbackEngine:TestKey:R';
+      $key = 'FallbackEngineTestKey';
       $value = date('Y-m-d h:m');
-      Cache::write($key, $value, $this->engine);
-      $this->assertEquals($value, Cache::read($key, $this->engine));
 
-      Cache::delete($key, $this->engine);
+      $fileCacheSettings = CacheMock::settings('secondary');
+
+      CacheMock::write($key, $value, $this->cache);
+      $this->assertEquals($value, CacheMock::read($key, $this->cache));
+      $this->assertFalse(file_exists(CACHE . DS . $fileCacheSettings['prefix'] . 'fallbackenginetestkey'));
+      CacheMock::delete($key, $this->cache);
+
+      CacheMock::fallback($this->cache);
+
+      CacheMock::write($key, $value, $this->cache);
+      $this->assertEquals($value, CacheMock::read($key, $this->cache));
+      $this->assertTrue(file_exists(CACHE . DS . $fileCacheSettings['prefix'] . 'fallbackenginetestkey'));
+
+      CacheMock::delete($key, $this->cache);
 
    } // End function testRead()
 

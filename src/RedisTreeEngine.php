@@ -11,7 +11,7 @@ class RedisTreeEngine extends CacheEngine {
    /**
     * Redis wrapper.
     */
-   private $redis = null;
+   protected $redis = null;
 
    /**
     * Settings
@@ -39,11 +39,9 @@ class RedisTreeEngine extends CacheEngine {
          'probability' => 100
          ), $settings);
 
-
       if (!class_exists('Predis\Client')) {
          return false;
       }
-
 
       if (!isset($this->redis)) {
          try {

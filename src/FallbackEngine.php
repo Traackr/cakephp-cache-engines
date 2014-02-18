@@ -1,23 +1,25 @@
 <?php
 
 /**
- *
+ * The Fallback engine manage 2 cache engine.
+ * The primary is used but if any operation fails, it will automaticall
+ * fallback on the secondary
  */
 class FallbackEngine extends CacheEngine {
-
-   // private $primaryEngine = null;
-
-   // private $secondaryEngine = null;
 
    private $primaryConfig   = 'primary';
    private $secondaryConfig = 'secondary';
 
+   /*
+    * The active of the 2 caches
+    */
    private $activeCache = null;
 
    /**
     * Settings
     */
    public $settings = array();
+
 
    public function init($settings = array()) {
 
@@ -75,22 +77,47 @@ class FallbackEngine extends CacheEngine {
    }
 
    public function delete($key) {
-      return Cache::delete($key, $this->activeCache);
+      try {
+         return Cache::delete($key, $this->activeCache);
+      }
+      catch(Exception $e) {
+         $this->fallback();
+         return Cache::delete($key, $this->activeCache);
+      }
+
    }
 
    public function increment($key, $offset = 1) {
-      return Cache::increment($key, $offset, $this->activeCache);
+      try {
+         return Cache::increment($key, $offset, $this->activeCache);
+      }
+      catch(Exception $e) {
+         $this->fallback();
+         return Cache::increment($key, $offset, $this->activeCache);
+      }
    }
 
    public function decrement($key, $offset = 1) {
-      return Cache::decrement($key, $offset, $this->activeCache);
+      try {
+         return Cache::decrement($key, $offset, $this->activeCache);
+      }
+      catch(Exception $e) {
+         $this->fallback();
+         return Cache::decrement($key, $offset, $this->activeCache);
+      }
    }
 
    public function clear($check = false) {
-      return Cache::clear($check, $this->activeCache);
+      try {
+         return Cache::clear($check, $this->activeCache);
+      }
+      catch(Exception $e) {
+         $this->fallback();
+         return Cache::clear($check, $this->activeCache);
+      }
    }
 
-   private function fallback($setPrimary = false) {
+   protected function fallback($setPrimary = false) {
       if ( $setPrimary ) {
          $this->activeCache = $this->primaryConfig;
       }

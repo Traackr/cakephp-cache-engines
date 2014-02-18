@@ -1,7 +1,7 @@
 CakePHP Cache Engines
 =====================
 
-This CakePHP plugin provide some addition cache engines that can be used by CakePHP.
+This CakePHP plugin provide some addition cache engines that can be used by CakePHP.  
 We currently provide 3 cache engines
 
 1. RedisTreeCacheEngine: Cache backed up by Redis. Support managing keys using wildcards
