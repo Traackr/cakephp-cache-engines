@@ -5,11 +5,14 @@ class FileTreeEngine extends FileEngine {
 
    public function delete($key) {
 
+      $deletedKeysCount = 0;
       $keys = glob($this->settings['path'] . $this->key($key));
       foreach ( $keys as $k ) {
          $f = new SplFileInfo($k);
          parent::delete($f->getFilename());
+         $deletedKeysCount++;
       }
+      return $deletedKeysCount;
 
    }
 

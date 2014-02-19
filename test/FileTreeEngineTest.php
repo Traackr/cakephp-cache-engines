@@ -56,9 +56,13 @@ class FileTreeEngineTest extends PHPUnit_Framework_TestCase {
       $keyTwo = $key.'Two';
       $value = date('Y-m-d h:m');
 
-      Cache::write($key, $value, $this->cache);
-      Cache::delete($key, $this->cache);
-      $this->assertFalse(Cache::read($key, $this->cache), 'Key not deleted');
+      CacheMock::write($key, $value, $this->cache);
+      $deletedKeysCount = CacheMock::delete($key, $this->cache);
+      $this->assertEquals(1, $deletedKeysCount, 'Incorrect number of keys deleted');
+      $this->assertFalse(CacheMock::read($key, $this->cache), 'Key not deleted');
+
+      $deletedKeysCount = CacheMock::delete('RandomKeyDoesNotExists', $this->cache);
+      $this->assertEquals(0, $deletedKeysCount, 'Incorrect number of keys deleted');
 
       Cache::write($keyOne, $value, $this->cache);
       Cache::write($keyTwo, $value, $this->cache);

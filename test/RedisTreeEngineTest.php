@@ -10,15 +10,21 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase {
 
    public function setUp() {
 
+      // Comment this to use real redis server
       $factory = new \M6Web\Component\RedisMock\RedisMockFactory();
       $redisMock = $factory->getAdapter('Predis\Client', true);
-
       CacheMock::config($this->cache, array(
          'engine' => 'RedisTreeMock',
          'duration' => 4
       ));
-
       CacheMock::setEngine($this->cache, $redisMock);
+
+      // Uncomment this to use real redis server
+      // CacheMock::config($this->cache, array(
+      //    'engine' => 'RedisTree',
+      //    'duration' => 4
+      // ));
+
 
    } // End function setUp()
 
@@ -63,8 +69,12 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase {
       $value = date('Y-m-d h:m');
 
       CacheMock::write($key, $value, $this->cache);
-      CacheMock::delete($key, $this->cache);
+      $deletedKeysCount = CacheMock::delete($key, $this->cache);
+      $this->assertEquals(1, $deletedKeysCount, 'Incorrect number of keys deleted');
       $this->assertNull(CacheMock::read($key, $this->cache), 'Key not deleted');
+
+      $deletedKeysCount = CacheMock::delete('RandomKeyDoesNotExists', $this->cache);
+      $this->assertEquals(0, $deletedKeysCount, 'Incorrect number of keys deleted');
 
       CacheMock::write($keyOne, $value, $this->cache);
       CacheMock::write($keyTwo, $value, $this->cache);

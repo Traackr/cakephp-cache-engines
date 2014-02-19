@@ -149,7 +149,13 @@ class RedisTreeEngine extends CacheEngine {
    public function delete($key) {
 
       $keys = $this->redis->keys($key);
-      return $this->redis->del($keys);
+      // Check if there are any key to delete
+      if ( !empty($keys) ) {
+         return $this->redis->del($keys);
+      }
+      else {
+         return 0;
+      }
 
    } // End function delete()
 
