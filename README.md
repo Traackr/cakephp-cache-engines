@@ -1,5 +1,6 @@
 CakePHP Cache Engines
 =====================
+[![Build Status](https://api.travis-ci.org/Traackr/cakephp-cache-engines.png?branch=master)](https://travis-ci.org/Traackr/cakephp-cache-engines)
 
 This CakePHP plugin provide some addition cache engines that can be used by CakePHP.  
 We currently provide 3 cache engines
