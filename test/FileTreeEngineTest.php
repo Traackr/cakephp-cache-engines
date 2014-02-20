@@ -95,4 +95,5 @@ function testClear() {
       $this->assertFalse(Cache::read($otherKey, $this->cache), 'Key not deleted');
 
    } // End testClear()
+
 } // End class FileTreeEngineTest
