@@ -21,5 +21,10 @@ require_once(dirname(__FILE__) . '/../src/Engines.php');
 require_once(dirname(__FILE__) . '/EnginesMock.php');
 
 // Some constants required by CakePHP
-define("CACHE", dirname(__FILE__). '/tmp');
+define("CACHE", dirname(__FILE__) . '/tmp');
 define("DS", DIRECTORY_SEPARATOR);
+
+// Create tmp file for File cache
+if ( !file_exists(dirname(__FILE__) . '/tmp') ) {
+   mkdir(dirname(__FILE__) . '/tmp');
+}
