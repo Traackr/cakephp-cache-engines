@@ -29,7 +29,7 @@ class RedisTreeEngine extends CacheEngine {
     */
    public function init($settings = array()) {
 
-      $this->settings = array_merge(array(
+      $settings += array_merge(array(
          'engine'=> 'RedisTree',
          'host' => '127.0.0.1',
          'port' => 6379,
@@ -38,6 +38,7 @@ class RedisTreeEngine extends CacheEngine {
          'groups' => array(),
          'probability' => 100
          ), $settings);
+      parent::init($settings);
 
       if (!class_exists('Predis\Client')) {
          return false;
