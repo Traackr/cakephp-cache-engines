@@ -15,38 +15,41 @@ class FallbackEngine extends CacheEngine {
     */
    private $activeCache = null;
 
-   /**
-    * Settings
-    */
-   public $settings = array();
-
 
    public function init($settings = array()) {
 
-      $this->settings = array_merge(array(
+      $settings += array(
          'engine'=> 'Fallback',
          'prefix' => '',
          'probability' => 100,
          'duration' => 0,
          'groups' => array()
-         ), $settings);
+      );
+      parent::init($settings);
+
+      // 'name' is required
+      if ( empty($this->settings['name']) ) { return false; }
+      // Generate unique config name
+      $config = $this->settings['name'];
+      $this->primaryConfig = $config . "-" . $this->primaryConfig;
+      $this->secondaryConfig = $config . "-" . $this->secondaryConfig;
 
       try {
          if ( isset($this->settings['primary']['engine']) ) {
-            Cache::config('primary', $this->settings['primary']);
+            Cache::config($this->primaryConfig, $this->settings['primary']);
          }
-         $this->activeCache = 'primary';
+         $this->activeCache = $this->primaryConfig;
 
          if ( isset($this->settings['secondary']['engine']) ) {
-            Cache::config('secondary', $this->settings['secondary']);
+            Cache::config($this->secondaryConfig, $this->settings['secondary']);
          }
       }
       catch (CacheException $e) {
          try {
             if ( isset($this->settings['secondary']['engine']) ) {
-               Cache::config('secondary', $this->settings['secondary']);
+               Cache::config($this->secondaryConfig, $this->settings['secondary']);
             }
-            $this->activeCache = 'secondary';
+            $this->activeCache = $this->secondaryConfig;
          }
          catch (CacheException $ee) {
             return false;
