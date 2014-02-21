@@ -57,6 +57,14 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase {
       sleep(3);
       $this->assertNull(CacheMock::read($key, $this->cache));
 
+      // test key value is not transformed
+      $specialKey = '/\.<>?:| \'""';
+      CacheMock::write($specialKey, $value, $this->cache);
+      $this->assertEquals($value, CacheMock::read($specialKey, $this->cache));
+      $keys = CacheMock::keys($this->cache);
+      $this->assertCount(1, $keys, "Wrong number of keys found");
+      $this->assertEquals($specialKey, $keys[0], "Incorrect key");
+
    } // End function testWrite()
 
 

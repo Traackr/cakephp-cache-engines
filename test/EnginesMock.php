@@ -16,6 +16,10 @@ class RedisTreeMockEngine extends RedisTreeEngine {
       $this->redis = $redis;
    } // End class setRedis()
 
+   public function keys() {
+      return $this->redis->keys('*');
+   } // End class setRedis()
+
 } // End  class RedisTreeMockEngine
 
 
@@ -46,6 +50,10 @@ class CacheMock extends Cache {
 
    public static function fallback($name) {
       self::$_engines[$name]->fallback();
+   } // End function fallback()
+
+   public static function keys($name) {
+      return self::$_engines[$name]->keys();
    } // End function fallback()
 
 } // End class CacheMock

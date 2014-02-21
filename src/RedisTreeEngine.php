@@ -68,9 +68,13 @@ class RedisTreeEngine extends CacheEngine {
 
    } // End function init()
 
+   /*
+    * Transfrom characters that are not valid for a key.
+    * In Redis all characters can be used in a key
+    */
    public function key($key) {
 
-      return str_replace(array(DS, '/', '.', '<', '>', '?', ':', '|', ' ', '"'), '_', $key);
+      return $key;
 
    } // End function translateKey()
 
