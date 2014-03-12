@@ -48,7 +48,7 @@ class RedisTreeEngine extends CacheEngine {
          try {
             $this->redis = new Predis\Client(array(
                'scheme' => 'tcp',
-               'server'   => $this->settings['server'],
+               'host'   => $this->settings['server'],
                'port'   => $this->settings['port'],
             ));
          }
