@@ -31,7 +31,7 @@ class RedisTreeEngine extends CacheEngine {
 
       $settings += array_merge(array(
          'engine'=> 'RedisTree',
-         'host' => '127.0.0.1',
+         'server' => '127.0.0.1',
          'port' => 6379,
          'prefix' => '',
          'duration' => 60,
@@ -48,7 +48,7 @@ class RedisTreeEngine extends CacheEngine {
          try {
             $this->redis = new Predis\Client(array(
                'scheme' => 'tcp',
-               'host'   => $this->settings['host'],
+               'server'   => $this->settings['server'],
                'port'   => $this->settings['port'],
             ));
          }
