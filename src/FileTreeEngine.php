@@ -3,6 +3,33 @@
 class FileTreeEngine extends FileEngine {
 
 
+   public function read($key) {
+   
+      //combo keys will be of the form: prefix_[blah,blah]
+      if (strpos($key, ',') !== false && strpos($key, '[') !== false && strpos($key, ']') !== false) {
+
+         $parts = str_replace(array(',', '[', ']'), ',', $key);
+         $parts = explode(',', $parts);
+         
+         //get rid of trailing empty
+         $parts = array_diff($parts, array(''));
+         
+         $prefix = $parts[0];
+         
+         $returnVal = array();
+         for($i = 1; $i < count($parts); $i++) {
+            $key = $prefix . $parts[$i];
+         
+            $returnVal[] = parent::read($key);
+         }
+         return $returnVal;
+      }
+      
+      return parent::read($key);
+
+   } // End function read()
+
+
    public function delete($key) {
 
       $deletedKeysCount = 0;

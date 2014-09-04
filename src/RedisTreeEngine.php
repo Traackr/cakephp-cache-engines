@@ -104,7 +104,65 @@ class RedisTreeEngine extends CacheEngine {
     * @param string $key Identifier for the data
     * @return mixed The cached data, or false if the data doesn't exist, has expired, or if there was an error fetching it
     */
+
    public function read($key) {
+
+      //combo keys will be of the form: prefix_[blah,blah]
+      if (strpos($key, ',') !== false && strpos($key, '[') !== false && strpos($key, ']') !== false) {
+
+         $parts = str_replace(array(',', '[', ']'), ',', $key);
+         $parts = explode(',', $parts);
+         
+         //get rid of trailing empty
+         $parts = array_diff($parts, array(''));
+         
+         $prefix = $parts[0];
+         
+         $returnVal = array();
+         for($i = 1; $i < count($parts); $i++) {
+            $key = $prefix . $parts[$i];
+         
+            $returnVal[] = $key;//$this->_read($key);
+         }
+         
+         
+         return $this->_mread($returnVal);
+      }
+      
+      return $this->_read($key);
+   
+   }
+
+   private function _mread($keys) {
+
+      $items = $this->redis->mget($keys);
+      
+      if (is_array($items)) { //should be an array...
+
+         $returnVal = array();
+
+         foreach ($items as $value) {
+
+            if (ctype_digit($value)) {
+              $value = (int)$value;
+            }
+            if ($value !== false && is_string($value)) {
+              $value = unserialize($value);
+            }
+         
+            $returnVal[] = $value;
+         
+         }
+         
+         return $returnVal;
+      
+      }
+      
+      return $items;
+
+   } // End function read()
+   
+   private function _read($key) {
 
       $value = $this->redis->get($key);
       if (ctype_digit($value)) {
