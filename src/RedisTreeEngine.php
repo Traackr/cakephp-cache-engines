@@ -87,6 +87,68 @@ class RedisTreeEngine extends CacheEngine {
     * @return boolean True if the data was succesfully cached, false on failure    */
    public function write($key, $value, $duration) {
 
+      //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code
+      if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+
+         $parts = str_replace(array('[', ']'), ',', $key);
+         $parts = explode(',', $parts);
+         
+         //get rid of trailing empty
+         $parts = array_diff($parts, array(''));
+         
+         $prefix = $parts[0];
+         
+         $keys = array();
+         for($i = 1; $i < count($parts); $i++) {
+            $key = $prefix . $parts[$i];
+         
+            $keys[] = $key;
+         }
+         
+         if (count($keys) != count($value)) {
+            throw new Exception('Num keys != num values.');
+         }
+         $key_vals = array_combine($keys, $value);
+
+         return $this->_mwrite($key_vals, $duration);
+      }
+      
+      return $this->_write($key, $value, $duration);
+   
+   }
+
+   /**
+    * Internal multi-val write.
+    */
+   private function _mwrite($key_value_array, $duration) {
+
+      foreach ($key_value_array as $key => &$value) {
+
+         if (!is_int($value)) {
+           $value = serialize($value);
+         }
+
+      }
+      unset($value);
+      
+      if ($duration === 0) {
+        return $this->redis->mset($key_value_array);
+      }
+
+      //note that there is no "msetex" in redis! must do this in a more convoluted way:
+      $this->redis->multi();
+      foreach ($key_value_array as $key => $value) {
+         $this->redis->setex($key, $duration, $value);
+      }
+      return $this->redis->exec();
+
+   } // End function _mwrite()
+
+   /**
+    * Internal single-val write.
+    */
+   public function _write($key, $value, $duration) {
+
       if (!is_int($value)) {
         $value = serialize($value);
       }
@@ -96,7 +158,7 @@ class RedisTreeEngine extends CacheEngine {
 
       return $this->redis->setex($key, $duration, $value);
 
-   } // End funcntion write()
+   } // End function _write()
 
    /**
     * Read a key from the cache
@@ -104,13 +166,12 @@ class RedisTreeEngine extends CacheEngine {
     * @param string $key Identifier for the data
     * @return mixed The cached data, or false if the data doesn't exist, has expired, or if there was an error fetching it
     */
-
    public function read($key) {
 
-      //combo keys will be of the form: prefix_[blah,blah]
-      if (strpos($key, ',') !== false && strpos($key, '[') !== false && strpos($key, ']') !== false) {
+      //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code
+      if (strpos($key, '[') !== false && substr($key, -1) == ']') {
 
-         $parts = str_replace(array(',', '[', ']'), ',', $key);
+         $parts = str_replace(array('[', ']'), ',', $key);
          $parts = explode(',', $parts);
          
          //get rid of trailing empty
@@ -131,8 +192,11 @@ class RedisTreeEngine extends CacheEngine {
       
       return $this->_read($key);
    
-   }
+   } // End function read()
 
+   /**
+    * Internal multi-val read.
+    */
    private function _mread($keys) {
 
       $items = $this->redis->mget($keys);
@@ -157,11 +221,17 @@ class RedisTreeEngine extends CacheEngine {
          return $returnVal;
       
       }
+      else {
+         throw new Exception('mget() should have returned array: ' . print_r($items, true));
+      }
       
       return $items;
 
-   } // End function read()
-   
+   } // End function _mread()
+
+   /**
+    * Internal single-val read.
+    */
    private function _read($key) {
 
       $value = $this->redis->get($key);
@@ -173,7 +243,7 @@ class RedisTreeEngine extends CacheEngine {
       }
       return $value;
 
-   } // End function read()
+   } // End function _read()
 
    /**
     * Increments the value of an integer cached key
