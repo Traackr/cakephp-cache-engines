@@ -147,7 +147,7 @@ class RedisTreeEngine extends CacheEngine {
    /**
     * Internal single-val write.
     */
-   public function _write($key, $value, $duration) {
+   private function _write($key, $value, $duration) {
 
       if (!is_int($value)) {
         $value = serialize($value);
