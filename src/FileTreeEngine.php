@@ -13,10 +13,16 @@ class FileTreeEngine extends FileEngine {
          $parts = str_replace(array('[', ']'), ',', $key);
          $parts = explode(',', $parts);
          
-         //get rid of trailing empty
+         //get rid of trailing empty (or beginning empty, if no prefix)
          $parts = array_diff($parts, array(''));
          
-         $prefix = $parts[0];
+         //note that if there is no prefix, the array_diff above will leave us with an array whose first index is "1"
+         if (isset($parts[0])) {
+            $prefix = $parts[0];
+         }
+         else {
+            $prefix = '';
+         }
          
          $returnVal = array();
          for($i = 1; $i < count($parts); $i++) {
@@ -42,10 +48,16 @@ class FileTreeEngine extends FileEngine {
          $parts = str_replace(array('[', ']'), ',', $key);
          $parts = explode(',', $parts);
          
-         //get rid of trailing empty
+         //get rid of trailing empty (or beginning empty, if no prefix)
          $parts = array_diff($parts, array(''));
          
-         $prefix = $parts[0];
+         //note that if there is no prefix, the array_diff above will leave us with an array whose first index is "1"
+         if (isset($parts[0])) {
+            $prefix = $parts[0];
+         }
+         else {
+            $prefix = '';
+         }
          
          $success = true;
          for($i = 1; $i < count($parts); $i++) {
