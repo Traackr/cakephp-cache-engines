@@ -110,7 +110,7 @@ class RedisTreeEngine extends CacheEngine {
       }
 
       $key_elms = explode($this->key_delim, $key);
-      $nodes = [];
+      $nodes = array();
       // Create an array of all nodes, drop latest since it's should be a leaf
       $path = '';
       for ( $i = 0; $i < sizeof($key_elms)-1; $i++) {
