@@ -1,5 +1,7 @@
 <?php
 
+date_default_timezone_set('America/New_York');
+
 // CakePHP required class for unit tests
 require_once(dirname(__FILE__) . '/../vendor/cakephp/cakephp/lib/Cake/basics.php');
 require_once(dirname(__FILE__) . '/../vendor/cakephp/cakephp/lib/Cake/Core/App.php');

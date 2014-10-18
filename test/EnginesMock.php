@@ -12,14 +12,21 @@
  */
 class RedisTreeMockEngine extends RedisTreeEngine {
 
-   public function setRedis($redis) {
+   public function setEngine($redis) {
       $this->redis = $redis;
-   } // End class setRedis()
+   } // End function setEngine()
 
-   public function keys() {
-      return $this->redis->keys('*');
-   } // End class setRedis()
+   public function getEngine() {
+     return $this->redis;
+   } // End function getEngine()
 
+   public function keys($pattern) {
+      return $this->redis->keys($pattern);
+   } // End function keys()
+
+  public function sismember($key, $member) {
+      return $this->redis->sismember($key, $member);
+  }
 } // End  class RedisTreeMockEngine
 
 
@@ -45,15 +52,27 @@ class FallbackMockEngine extends FallbackEngine {
 class CacheMock extends Cache {
 
    public static function setEngine($name, $engine) {
-      self::$_engines[$name]->setRedis($engine);
+      self::$_engines[$name]->setEngine($engine);
    } // End function setEngine()
+
+  public static function getEngine($name) {
+     return self::$_engines[$name]->getEngine();
+  } // End function getEngine()
 
    public static function fallback($name) {
       self::$_engines[$name]->fallback();
    } // End function fallback()
 
-   public static function keys($name) {
-      return self::$_engines[$name]->keys();
-   } // End function fallback()
+   public static function keys($pattern, $name) {
+      return self::$_engines[$name]->keys($pattern);
+   } // End function keys()
+
+  public static function getNodesKey($name) {
+    return self::$_engines[$name]->getNodeskey();
+  }
+
+  public static function sismember($key, $member, $name) {
+     return self::$_engines[$name]->sismember($key, $member);
+  }
 
 } // End class CacheMock
