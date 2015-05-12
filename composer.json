@@ -28,5 +28,10 @@
   },
   "config": {
     "bin-dir": "bin"
+  },
+  "autoload": {
+    "psr-4": {
+      "CacheEngines\\": "src"
+    }
   }
 }
