@@ -1,6 +1,8 @@
 <?php
 
-class FileTreeEngine extends FileEngine {
+namespace Cake\Cache;
+
+class FileTreeEngine extends Engine\FileEngine {
 
 
    public function delete($key) {

@@ -1,5 +1,6 @@
 <?php
 
+namespace Cake\Cache;
 /**
  * The Fallback engine manage 2 cache engine.
  * The primary is used but if any operation fails, it will automaticall
@@ -16,7 +17,7 @@ class FallbackEngine extends CacheEngine {
    private $activeCache = null;
 
 
-   public function init($settings = array()) {
+   public function init(array $settings = [] {
 
       $settings += array(
          'engine'=> 'Fallback',

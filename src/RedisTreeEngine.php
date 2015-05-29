@@ -1,5 +1,7 @@
 <?php
 
+namespace Cake\Cache;
+
 /**
  * Redis storage engine for cache.
  *
@@ -37,7 +39,7 @@ class RedisTreeEngine extends CacheEngine {
     * @param array $setting array of setting for the engine
     * @return boolean True if the engine has been successfully initialized, false if not
     */
-   public function init($settings = array()) {
+   public function init(array $settings = [] {
 
       $settings += array_merge(array(
          'engine'=> 'RedisTree',
