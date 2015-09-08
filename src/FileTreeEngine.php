@@ -25,7 +25,7 @@ class FileTreeEngine extends FileEngine {
          }
 
          $returnVal = array();
-         for($i = 1; $i <= count($parts); $i++) {
+         for($i = 1; $i < count($parts); $i++) {
             $key = $prefix . $parts[$i];
 
             $returnVal[] = parent::read($key);
@@ -60,7 +60,7 @@ class FileTreeEngine extends FileEngine {
          }
 
          $success = true;
-         for($i = 1; $i <= count($parts); $i++) {
+         for($i = 1; $i < count($parts); $i++) {
             $key = $prefix . $parts[$i];
 
             if (!isset($data[$i - 1])) {
