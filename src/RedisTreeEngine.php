@@ -92,10 +92,10 @@ class RedisTreeEngine extends CacheEngine {
 
          $parts = str_replace(array('[', ']'), ',', $key);
          $parts = explode(',', $parts);
-         
+
          //get rid of trailing empty (or beginning empty, if no prefix)
          $parts = array_diff($parts, array(''));
-         
+
          //note that if there is no prefix, the array_diff above will leave us with an array whose first index is "1"
          if (isset($parts[0])) {
             $prefix = $parts[0];
@@ -103,14 +103,14 @@ class RedisTreeEngine extends CacheEngine {
          else {
             $prefix = '';
          }
-         
+
          $keys = array();
-         for($i = 1; $i < count($parts); $i++) {
+         for($i = 1; $i <= count($parts); $i++) {
             $key = $prefix . $parts[$i];
-         
+
             $keys[] = $key;
          }
-         
+
          if (count($keys) != count($value)) {
             throw new Exception('Num keys != num values.');
          }
@@ -118,9 +118,9 @@ class RedisTreeEngine extends CacheEngine {
 
          return $this->_mwrite($key_vals, $duration);
       }
-      
+
       return $this->_write($key, $value, $duration);
-   
+
    }
 
    /**
@@ -136,7 +136,7 @@ class RedisTreeEngine extends CacheEngine {
 
       }
       unset($value);
-      
+
       if ($duration === 0) {
         return $this->redis->mset($key_value_array);
       }
@@ -182,7 +182,7 @@ class RedisTreeEngine extends CacheEngine {
 
          //get rid of trailing empty (or beginning empty, if no prefix)
          $parts = array_diff($parts, array(''));
-         
+
          //note that if there is no prefix, the array_diff above will leave us with an array whose first index is "1"
          if (isset($parts[0])) {
             $prefix = $parts[0];
@@ -190,20 +190,20 @@ class RedisTreeEngine extends CacheEngine {
          else {
             $prefix = '';
          }
-         
+
          $returnVal = array();
-         for($i = 1; $i < count($parts); $i++) {
+         for($i = 1; $i <= count($parts); $i++) {
             $key = $prefix . $parts[$i];
-         
+
             $returnVal[] = $key;//$this->_read($key);
          }
-         
-         
+
+
          return $this->_mread($returnVal);
       }
-      
+
       return $this->_read($key);
-   
+
    } // End function read()
 
    /**
@@ -212,7 +212,7 @@ class RedisTreeEngine extends CacheEngine {
    private function _mread($keys) {
 
       $items = $this->redis->mget($keys);
-      
+
       if (is_array($items)) { //should be an array...
 
          $returnVal = array();
@@ -225,18 +225,18 @@ class RedisTreeEngine extends CacheEngine {
             if ($value !== false && is_string($value)) {
               $value = unserialize($value);
             }
-         
+
             $returnVal[] = $value;
-         
+
          }
-         
+
          return $returnVal;
-      
+
       }
       else {
          throw new Exception('mget() should have returned array: ' . print_r($items, true));
       }
-      
+
       return $items;
 
    } // End function _mread()

@@ -47,22 +47,23 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase {
    } // End function testRead()
 
 
-   /*
-    * This test will have to remain commented out until RedisMock supports MGET/MSET
-   function testMultiRead() {
+   function testMultiWriteRead() {
 
       $key1 = 'RedisTreeEngine:TestKey:R:1';
-      $value1 = date('Y-m-d h:m') . ':1';
-      CacheMock::write($key1, $value1, $this->cache);
-
       $key2 = 'RedisTreeEngine:TestKey:R:2';
-      $value2 = date('Y-m-d h:m') . ':2';
-      CacheMock::write($key2, $value2, $this->cache);
-
       $multiKey = '[' . $key1 . ',' . $key2 . ']';
 
+      $value1 = date('Y-m-d h:m') . ':1';
+      $value2 = date('Y-m-d h:m') . ':2';
+      $values = array(
+          $value1,
+          $value2
+      );
+
+      CacheMock::write($multiKey, $values, $this->cache);
+
       $multiVal = CacheMock::read($multiKey, $this->cache);
-      
+
       $this->assertInternalType('array', $multiVal);
       $this->assertEquals(2, count($multiVal));
       $first = $multiVal[0];
@@ -74,9 +75,7 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase {
       CacheMock::delete($key2);
 
    } // End function testMultiRead()
-   
-   TODO: tests for multi-write and full tests for file-tree-engine
-   */
+
 
    function testWrite() {
 
