@@ -33,7 +33,8 @@
   "require-dev": {
     "phpunit/phpunit": "3.7.*",
     "cakephp/cakephp": "2.4.5",
-    "m6web/redis-mock": "v2.3.0"
+    "m6web/redis-mock": "v2.3.0",
+    "squizlabs/php_codesniffer": "2.*"
   },
   "config": {
     "bin-dir": "bin"
