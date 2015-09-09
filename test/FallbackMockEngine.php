@@ -6,7 +6,7 @@
 class FallbackMockEngine extends FallbackEngine
 {
 
-    public function fallback()
+    public function fallback($setPrimary = false)
     {
         parent::fallback();
     }
