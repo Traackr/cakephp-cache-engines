@@ -81,44 +81,16 @@ class RedisTreeEngine extends CacheEngine
 
     }
 
-    /**
-     * Write data for key into cache.
-     *
-     * @param string $key Identifier for the data
-     * @param mixed $value Data to be cached
-     * @param integer $duration How long to cache the data, in seconds
-     * @return bool True if the data was successfully cached, false on failure
-     * @throws Exception
-     */
-    public function write($key, $value, $duration)
-    {
+      // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
+      // a prefix configured by the user or left as null.
+      if (strpos($key, '[') !== false && substr($key, -1) == ']') {
 
-        //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code
-        if (strpos($key, '[') !== false && substr($key, -1) == ']') {
-            $parts = str_replace(array('[', ']'), ',', $key);
-            $parts = explode(',', $parts);
+         $keys = $this->parseMultiKey($key);
 
-            //get rid of trailing empty (or beginning empty, if no prefix)
-            $parts = array_diff($parts, array(''));
-
-            //note that if there is no prefix, the array_diff above will leave us with an array whose first index is "1"
-            if (isset($parts[0])) {
-                $prefix = $parts[0];
-            } else {
-                $prefix = '';
-            }
-
-            $keys = array();
-            for ($i = 1; $i <= count($parts); $i++) {
-                $key = $prefix . $parts[$i];
-
-                $keys[] = $key;
-            }
-
-            if (count($keys) != count($value)) {
-                throw new Exception('Num keys != num values.');
-            }
-            $key_vals = array_combine($keys, $value);
+         if (count($keys) != count($value)) {
+            throw new Exception('Num keys != num values.');
+         }
+         $key_vals = array_combine($keys, $value);
 
             return $this->_mwrite($key_vals, $duration);
         }
@@ -192,30 +164,12 @@ class RedisTreeEngine extends CacheEngine
             $parts = str_replace(array('[', ']'), ',', $key);
             $parts = explode(',', $parts);
 
-            //get rid of trailing empty (or beginning empty, if no prefix)
-            $parts = array_diff($parts, array(''));
+      //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code
+      if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+         $keys = $this->parseMultiKey($key);
 
-            //note that if there is no prefix, the array_diff above will leave us with an array whose first index is "1"
-            if (isset($parts[0])) {
-                $prefix = $parts[0];
-            } else {
-                $prefix = '';
-            }
-
-            $returnVal = array();
-            for ($i = 1; $i <= count($parts); $i++) {
-                $key = $prefix . $parts[$i];
-
-                $returnVal[] = $key;
-            }
-
-
-            return $this->_mread($returnVal);
-        }
-
-        return $this->_read($key);
-
-    }
+         return $this->_mread($keys);
+      }
 
     /**
      * Internal multi-val read.
@@ -358,15 +312,56 @@ class RedisTreeEngine extends CacheEngine
         return $result;
     }
 
-    /**
-     * Increments the group value to simulate deletion of all keys under a group
-     * old values will remain in storage until they expire.
-     *
-     * @param $group
-     * @return bool success
-     */
-    public function clearGroup($group)
-    {
-        return (bool)$this->redis->incr($this->settings['prefix'] . $group);
-    }
-}
+      if ($check) {
+         return true;
+      }
+      $keys = $this->redis->keys($this->settings['prefix'] . '*');
+      $this->redis->del($keys);
+      return true;
+
+   } // End function clear()
+
+   /**
+    * Returns the `group value` for each of the configured groups
+    * If the group initial value was not found, then it initializes
+    * the group accordingly.
+    *
+    * @return array
+    */
+   public function groups() {
+      $result = array();
+      foreach ($this->settings['groups'] as $group) {
+         $value = $this->redis->get($this->settings['prefix'] . $group);
+         if (!$value) {
+            $value = 1;
+            $this->redis->set($this->settings['prefix'] . $group, $value);
+         }
+         $result[] = $group . $value;
+      }
+      return $result;
+   }
+
+   /**
+    * Increments the group value to simulate deletion of all keys under a group
+    * old values will remain in storage until they expire.
+    *
+    * @return boolean success
+    */
+   public function clearGroup($group) {
+      return (bool)$this->redis->incr($this->settings['prefix'] . $group);
+   }
+
+   protected function parseMultiKey($key) {
+      $matches = array();
+      preg_match("/([^\[]*)\[([^\]]+)\]/", $key, $matches);
+
+      $prefix = $matches[1];
+
+      $keys = array();
+      foreach(explode(",", $matches[2]) as $key) {
+          $keys[] = $prefix . trim($key);
+      }
+
+       return $keys;
+   }
+} // End class RedisTreeENgine
