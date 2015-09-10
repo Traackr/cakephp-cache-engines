@@ -87,29 +87,11 @@ class RedisTreeEngine extends CacheEngine {
     * @return boolean True if the data was succesfully cached, false on failure    */
    public function write($key, $value, $duration) {
 
-      //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code
+      // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
+      // a prefix configured by the user or left as null.
       if (strpos($key, '[') !== false && substr($key, -1) == ']') {
 
-         $parts = str_replace(array('[', ']'), ',', $key);
-         $parts = explode(',', $parts);
-
-         //get rid of trailing empty (or beginning empty, if no prefix)
-         $parts = array_diff($parts, array(''));
-
-         //note that if there is no prefix, the array_diff above will leave us with an array whose first index is "1"
-         if (isset($parts[0])) {
-            $prefix = $parts[0];
-         }
-         else {
-            $prefix = '';
-         }
-
-         $keys = array();
-         for($i = 1; $i <= count($parts); $i++) {
-            $key = $prefix . $parts[$i];
-
-            $keys[] = $key;
-         }
+         $keys = $this->parseMultiKey($key);
 
          if (count($keys) != count($value)) {
             throw new Exception('Num keys != num values.');
@@ -176,30 +158,9 @@ class RedisTreeEngine extends CacheEngine {
 
       //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code
       if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+         $keys = $this->parseMultiKey($key);
 
-         $parts = str_replace(array('[', ']'), ',', $key);
-         $parts = explode(',', $parts);
-
-         //get rid of trailing empty (or beginning empty, if no prefix)
-         $parts = array_diff($parts, array(''));
-
-         //note that if there is no prefix, the array_diff above will leave us with an array whose first index is "1"
-         if (isset($parts[0])) {
-            $prefix = $parts[0];
-         }
-         else {
-            $prefix = '';
-         }
-
-         $returnVal = array();
-         for($i = 1; $i <= count($parts); $i++) {
-            $key = $prefix . $parts[$i];
-
-            $returnVal[] = $key;//$this->_read($key);
-         }
-
-
-         return $this->_mread($returnVal);
+         return $this->_mread($keys);
       }
 
       return $this->_read($key);
@@ -351,4 +312,17 @@ class RedisTreeEngine extends CacheEngine {
       return (bool)$this->redis->incr($this->settings['prefix'] . $group);
    }
 
+   protected function parseMultiKey($key) {
+      $matches = array();
+      preg_match("/([^\[]*)\[([^\]]+)\]/", $key, $matches);
+
+      $prefix = $matches[1];
+
+      $keys = array();
+      foreach(explode(",", $matches[2]) as $key) {
+          $keys[] = $prefix . trim($key);
+      }
+
+       return $keys;
+   }
 } // End class RedisTreeENgine
