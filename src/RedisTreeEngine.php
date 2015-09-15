@@ -87,6 +87,56 @@ class RedisTreeEngine extends CacheEngine {
     * @return boolean True if the data was succesfully cached, false on failure    */
    public function write($key, $value, $duration) {
 
+      // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
+      // a prefix configured by the user or left as null.
+      if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+
+         $keys = $this->parseMultiKey($key);
+
+         if (count($keys) != count($value)) {
+            throw new Exception('Num keys != num values.');
+         }
+         $key_vals = array_combine($keys, $value);
+
+         return $this->_mwrite($key_vals, $duration);
+      }
+
+      return $this->_write($key, $value, $duration);
+
+   }
+
+   /**
+    * Internal multi-val write.
+    */
+   private function _mwrite($key_value_array, $duration) {
+
+      foreach ($key_value_array as $key => &$value) {
+
+         if (!is_int($value)) {
+           $value = serialize($value);
+         }
+
+      }
+      unset($value);
+
+      if ($duration === 0) {
+        return $this->redis->mset($key_value_array);
+      }
+
+      //note that there is no "msetex" in redis! must do this in a more convoluted way:
+      $this->redis->multi();
+      foreach ($key_value_array as $key => $value) {
+         $this->redis->setex($key, $duration, $value);
+      }
+      return $this->redis->exec();
+
+   } // End function _mwrite()
+
+   /**
+    * Internal single-val write.
+    */
+   private function _write($key, $value, $duration) {
+
       if (!is_int($value)) {
         $value = serialize($value);
       }
@@ -96,7 +146,7 @@ class RedisTreeEngine extends CacheEngine {
 
       return $this->redis->setex($key, $duration, $value);
 
-   } // End funcntion write()
+   } // End function _write()
 
    /**
     * Read a key from the cache
@@ -105,6 +155,57 @@ class RedisTreeEngine extends CacheEngine {
     * @return mixed The cached data, or false if the data doesn't exist, has expired, or if there was an error fetching it
     */
    public function read($key) {
+
+      //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code
+      if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+         $keys = $this->parseMultiKey($key);
+
+         return $this->_mread($keys);
+      }
+
+      return $this->_read($key);
+
+   } // End function read()
+
+   /**
+    * Internal multi-val read.
+    */
+   private function _mread($keys) {
+
+      $items = $this->redis->mget($keys);
+
+      if (is_array($items)) { //should be an array...
+
+         $returnVal = array();
+
+         foreach ($items as $value) {
+
+            if (ctype_digit($value)) {
+              $value = (int)$value;
+            }
+            if ($value !== false && is_string($value)) {
+              $value = unserialize($value);
+            }
+
+            $returnVal[] = $value;
+
+         }
+
+         return $returnVal;
+
+      }
+      else {
+         throw new Exception('mget() should have returned array: ' . print_r($items, true));
+      }
+
+      return $items;
+
+   } // End function _mread()
+
+   /**
+    * Internal single-val read.
+    */
+   private function _read($key) {
 
       $value = $this->redis->get($key);
       if (ctype_digit($value)) {
@@ -115,7 +216,7 @@ class RedisTreeEngine extends CacheEngine {
       }
       return $value;
 
-   } // End function read()
+   } // End function _read()
 
    /**
     * Increments the value of an integer cached key
@@ -211,4 +312,20 @@ class RedisTreeEngine extends CacheEngine {
       return (bool)$this->redis->incr($this->settings['prefix'] . $group);
    }
 
+   protected function parseMultiKey($key) {
+      $matches = array();
+
+       // Multi-keys are of the form <prefix>[key1, key2]
+       // e.g., foo:[hello, world], foobar-[first, post], [no, prefix, needed]
+       preg_match("/([^\[]*)\[([^\]]+)\]/", $key, $matches);
+
+      $prefix = $matches[1];
+
+      $keys = array();
+      foreach(explode(",", $matches[2]) as $key) {
+          $keys[] = $prefix . trim($key);
+      }
+
+       return $keys;
+   }
 } // End class RedisTreeENgine

@@ -96,4 +96,33 @@ function testClear() {
 
    } // End testClear()
 
+    function testMultiWriteRead() {
+
+        $key1 = 'FileTreeEngine:TestKey:R:1';
+        $key2 = 'FileTreeEngine:TestKey:R:2';
+        $multiKey = '[' . $key1 . ',' . $key2 . ']';
+
+        $value1 = date('Y-m-d h:m') . ':1';
+        $value2 = date('Y-m-d h:m') . ':2';
+        $values = array(
+            $value1,
+            $value2
+        );
+
+        Cache::write($multiKey, $values, $this->cache);
+
+        $multiVal = Cache::read($multiKey, $this->cache);
+
+        $this->assertInternalType('array', $multiVal);
+        $this->assertEquals(2, count($multiVal));
+        $first = $multiVal[0];
+        $this->assertEquals($first, $value1);
+        $second = $multiVal[1];
+        $this->assertEquals($second, $value2);
+
+        Cache::delete($key1);
+        Cache::delete($key2);
+
+    } // End function testMultiRead()
+
 } // End class FileTreeEngineTest

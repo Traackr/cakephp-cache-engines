@@ -47,6 +47,65 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase {
    } // End function testRead()
 
 
+   function testMultiWriteReadNoPrefix() {
+
+      $key1 = 'RedisTreeEngine:TestKey:R:1';
+      $key2 = 'RedisTreeEngine:TestKey:R:2';
+      $multiKey = '[' . $key1 . ',' . $key2 . ']';
+
+      $value1 = date('Y-m-d h:m') . ':1';
+      $value2 = date('Y-m-d h:m') . ':2';
+      $values = array(
+          $value1,
+          $value2
+      );
+
+      CacheMock::write($multiKey, $values, $this->cache);
+
+      $multiVal = CacheMock::read($multiKey, $this->cache);
+
+      $this->assertInternalType('array', $multiVal);
+      $this->assertEquals(2, count($multiVal));
+      $first = $multiVal[0];
+      $this->assertEquals($first, $value1);
+      $second = $multiVal[1];
+      $this->assertEquals($second, $value2);
+
+      CacheMock::delete($key1);
+      CacheMock::delete($key2);
+
+   } // End function testMultiRead()
+
+   function testMultiWriteReadWithPrefix() {
+
+      $key1 = 'RedisTreeEngine:TestKey:R:1';
+      $key2 = 'RedisTreeEngine:TestKey:R:2';
+      $multiKey = 'alist:[' . $key1 . ',' . $key2 . ']';
+
+      $value1 = date('Y-m-d h:m') . ':1';
+      $value2 = date('Y-m-d h:m') . ':2';
+      $values = array(
+          $value1,
+          $value2
+      );
+
+      CacheMock::write($multiKey, $values, $this->cache);
+
+      $multiVal = CacheMock::read($multiKey, $this->cache);
+
+      $this->assertInternalType('array', $multiVal);
+      $this->assertEquals(2, count($multiVal));
+      $first = $multiVal[0];
+      $this->assertEquals($first, $value1);
+      $second = $multiVal[1];
+      $this->assertEquals($second, $value2);
+
+      CacheMock::delete($key1);
+      CacheMock::delete($key2);
+
+   } // End function testMultiRead()
+
+
    function testWrite() {
 
       $key = 'RedisTreeEngine:TestKey:W';

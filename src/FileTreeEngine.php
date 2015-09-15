@@ -2,6 +2,80 @@
 
 class FileTreeEngine extends FileEngine {
 
+   /**
+    * Enhanced read to handle combo keys surrounded by brackets
+    */
+   public function read($key) {
+
+      //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code
+      if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+
+         $parts = str_replace(array('[', ']'), ',', $key);
+         $parts = explode(',', $parts);
+
+         //get rid of trailing empty (or beginning empty, if no prefix)
+         $parts = array_diff($parts, array(''));
+
+         //note that if there is no prefix, the array_diff above will leave us with an array whose first index is "1"
+         if (isset($parts[0])) {
+            $prefix = $parts[0];
+         }
+         else {
+            $prefix = '';
+         }
+
+         $returnVal = array();
+         for($i = 1; $i < count($parts); $i++) {
+            $key = $prefix . $parts[$i];
+
+            $returnVal[] = parent::read($key);
+         }
+         return $returnVal;
+      }
+
+      return parent::read($key);
+
+   } // End function read()
+
+   /**
+    * Enhanced read to handle combo keys surrounded by brackets
+    */
+   public function write($key, $data, $duration) {
+
+      //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code
+      if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+
+         $parts = str_replace(array('[', ']'), ',', $key);
+         $parts = explode(',', $parts);
+
+         //get rid of trailing empty (or beginning empty, if no prefix)
+         $parts = array_diff($parts, array(''));
+
+         //note that if there is no prefix, the array_diff above will leave us with an array whose first index is "1"
+         if (isset($parts[0])) {
+            $prefix = $parts[0];
+         }
+         else {
+            $prefix = '';
+         }
+
+         $success = true;
+         for($i = 1; $i < count($parts); $i++) {
+            $key = $prefix . $parts[$i];
+
+            if (!isset($data[$i - 1])) {
+               throw new Exception('Num keys != num values.');
+            }
+            //this is the best we can do to return an "overall success"
+            $success = $success && parent::write($key, $data[$i - 1], $duration);
+         }
+         return $success;
+      }
+
+      return parent::write($key, $data, $duration);
+
+   } // End function write()
+
 
    public function delete($key) {
 
