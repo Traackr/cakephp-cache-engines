@@ -337,6 +337,9 @@ class RedisTreeEngine extends CacheEngine
     protected function parseMultiKey($key)
     {
         $matches = array();
+
+        // Multi-keys are of the form <prefix>[key1, key2]
+        // e.g., foo:[hello, world], foobar-[first, post], [no, prefix, needed]
         preg_match("/([^\[]*)\[([^\]]+)\]/", $key, $matches);
 
         $prefix = $matches[1];
