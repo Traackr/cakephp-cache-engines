@@ -14,6 +14,15 @@
       "name": "David Chancogne",
       "email": "dchancogne@traackr.com",
       "homepage": "http://twitter.com/dchancogne"
+    },
+    {
+      "name": "Rajiv Ramaiah",
+      "email": "rramaiah@traackr.com"
+    },
+    {
+      "name": "Luis A. Cruz",
+      "email": "lcruz@traackr.com",
+      "homepage": "http://twitter.com/sprak"
     }
   ],
   "require": {
@@ -24,9 +33,14 @@
   "require-dev": {
     "phpunit/phpunit": "3.7.*",
     "cakephp/cakephp": "2.4.5",
-    "m6web/redis-mock": "v1.7.0"
+    "m6web/redis-mock": "v2.3.0"
   },
   "config": {
     "bin-dir": "bin"
+  },
+  "autoload": {
+    "psr-4": {
+      "CacheEngines\\": "src"
+    }
   }
 }
