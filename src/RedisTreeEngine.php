@@ -8,7 +8,6 @@
  */
 class RedisTreeEngine extends CacheEngine
 {
-
     /**
      * Redis wrapper.
      */
@@ -41,7 +40,6 @@ class RedisTreeEngine extends CacheEngine
      */
     public function init($settings = array())
     {
-
         $settings += array_merge(array(
             'engine' => 'RedisTree',
             'server' => '127.0.0.1',
@@ -77,30 +75,26 @@ class RedisTreeEngine extends CacheEngine
         }
 
         return true;
+    }
 
-
-   /*
+   /**
     * Returns the name of the key used to hold names
     */
-   public function getNodesKey() {
-     return $this->nodes_key;
-   }
+    public function getNodesKey()
+    {
+        return $this->nodes_key;
+    }
 
-   /*
-    * Transfrom characters that are not valid for a key.
-    * In Redis all characters can be used in a key
-    */
-   public function key($key) {
-
-    /*
+    /**
      * Transform characters that are not valid for a key.
      * In Redis all characters can be used in a key
+     *
+     * @param string $key
+     * @return string
      */
     public function key($key)
     {
-
         return $key;
-
     }
 
     /**
@@ -114,7 +108,6 @@ class RedisTreeEngine extends CacheEngine
      */
     public function write($key, $value, $duration)
     {
-
         // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
         // a prefix configured by the user or left as null.
         if (strpos($key, '[') !== false && substr($key, -1) == ']') {
@@ -139,12 +132,10 @@ class RedisTreeEngine extends CacheEngine
      */
     private function _mwrite($key_value_array, $duration)
     {
-
         foreach ($key_value_array as $key => &$value) {
             if (!is_int($value)) {
                 $value = serialize($value);
             }
-
         }
         unset($value);
 
@@ -158,7 +149,6 @@ class RedisTreeEngine extends CacheEngine
             $this->redis->setex($key, $duration, $value);
         }
         return $this->redis->exec();
-
     }
 
     /**
@@ -170,43 +160,36 @@ class RedisTreeEngine extends CacheEngine
      */
     private function _write($key, $value, $duration)
     {
-
         if (!is_int($value)) {
             $value = serialize($value);
         }
+
+        $key_elms = explode($this->key_delim, $key);
+        $nodes = array();
+        // Create an array of all nodes, drop latest since it's should be a leaf
+        $path = '';
+        for ($i = 0; $i < sizeof($key_elms)-1; $i++) {
+            $path .= ($i == 0 ? '' : $this->key_delim) . $key_elms[$i];
+            $this->redis->sadd($this->nodes_key, $path);
+            $nodes[] = $path;
+        }
+        // $this->redis->sadd($this->nodes_key, $nodes);
         if ($duration === 0) {
             return $this->redis->set($key, $value);
         }
 
         return $this->redis->setex($key, $duration, $value);
-
-      if (!is_int($value)) {
-        $value = serialize($value);
-      }
-
-      $key_elms = explode($this->key_delim, $key);
-      $nodes = array();
-      // Create an array of all nodes, drop latest since it's should be a leaf
-      $path = '';
-      for ( $i = 0; $i < sizeof($key_elms)-1; $i++) {
-        $path .= ($i == 0 ? '' : $this->key_delim) . $key_elms[$i];
-        $this->redis->sadd($this->nodes_key, $path);
-        $nodes[] = $path;
-      }
-      // $this->redis->sadd($this->nodes_key, $nodes);
-      if ($duration === 0) {
-        return $this->redis->set($key, $value);
-      }
+    }
 
     /**
      * Read a key from the cache
      *
      * @param string $key Identifier for the data
-     * @return mixed The cached data, or false if the data doesn't exist, has expired, or if there was an error fetching it
+     * @return mixed The cached data, or false if the data doesn't exist, has expired,
+     *               or if there was an error fetching it
      */
     public function read($key)
     {
-
         // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
         // a prefix configured by the user or left as null.
         if (strpos($key, '[') !== false && substr($key, -1) == ']') {
@@ -216,7 +199,6 @@ class RedisTreeEngine extends CacheEngine
         }
 
         return $this->_read($key);
-
     }
 
     /**
@@ -227,7 +209,6 @@ class RedisTreeEngine extends CacheEngine
      */
     private function _mread($keys)
     {
-
         $items = $this->redis->mget($keys);
 
         if (is_array($items)) {
@@ -246,11 +227,9 @@ class RedisTreeEngine extends CacheEngine
             }
 
             return $returnVal;
-
         } else {
             throw new Exception('mget() should have returned array: ' . print_r($items, true));
         }
-
     }
 
     /**
@@ -260,7 +239,6 @@ class RedisTreeEngine extends CacheEngine
      */
     private function _read($key)
     {
-
         $value = $this->redis->get($key);
         if (ctype_digit($value)) {
             $value = (int)$value;
@@ -269,7 +247,6 @@ class RedisTreeEngine extends CacheEngine
             $value = unserialize($value);
         }
         return $value;
-
     }
 
     /**
@@ -282,9 +259,7 @@ class RedisTreeEngine extends CacheEngine
      */
     public function increment($key, $offset = 1)
     {
-
         return $this->redis->incrBy($key, $offset);
-
     }
 
     /**
@@ -297,9 +272,7 @@ class RedisTreeEngine extends CacheEngine
      */
     public function decrement($key, $offset = 1)
     {
-
         return $this->redis->decrBy($key, $offset);
-
     }
 
     /**
@@ -310,7 +283,6 @@ class RedisTreeEngine extends CacheEngine
      */
     public function delete($key)
     {
-
         $keys = $this->redis->keys($key);
         // Check if there are any key to delete
         if (!empty($keys)) {
@@ -318,7 +290,6 @@ class RedisTreeEngine extends CacheEngine
         } else {
             return 0;
         }
-
     }
 
     /**
@@ -329,35 +300,35 @@ class RedisTreeEngine extends CacheEngine
      */
     public function clear($check = false)
     {
+        // shortcut on empty key
+        if (empty($key)) {
+            return 0;
+        }
 
-      // shortcut on empty key
-      if ( empty($key) ) return 0;
+        $key_node = '';
+        // Try to determine if the key is a node
+        if ($this->redis->sismember($this->nodes_key, $key) === 1) {
+            $key_node = $key;
+            $key .= $this->key_delim.'*';
+        } elseif ($key[strlen($key)-1] === $this->key_delim) {
+            // If key ends with delimiter, automatically add * after the key to delete the entire node
+            $key_node = substr($key, 0, strlen($key)-1);
+            $key .= '*';
+        }
 
-      $key_node = '';
-      // Try to determine if the key is a node
-      if ( $this->redis->sismember($this->nodes_key, $key) === 1 ) {
-        $key_node = $key;
-        $key .= $this->key_delim.'*';
-      }
-      // If key ends with delimiter, automatically add
-      // * after the key to delete the entire node
-      else if ( $key[strlen($key)-1] === $this->key_delim ) {
-        $key_node = substr($key, 0, strlen($key)-1);
-        $key .= '*';
-      }
+        // Retrieve all keys to delete
+        $keys = $this->redis->keys($key);
+        // Delete node from list of nodes if deleting entire node
+        if (!empty($key_node)) {
+            $this->redis->srem($this->nodes_key, $key_node);
+        }
+        // Check if there are any key to delete and delete
+        $result = 0;
+        if (!empty($keys)) {
+            $result = $this->redis->del($keys);
+        }
 
-      // Retrieve all keys to delete
-      $keys = $this->redis->keys($key);
-      // Delete node from list of nodes if deleting entire node
-      if (!empty($key_node)) $this->redis->srem($this->nodes_key, $key_node);
-      // Check if there are any key to delete and delete
-      if ( !empty($keys) ) {
-         return $this->redis->del($keys);
-      }
-      else {
-         return 0;
-      }
-
+        return $result;
     }
 
     /**
@@ -378,6 +349,7 @@ class RedisTreeEngine extends CacheEngine
             }
             $result[] = $group . $value;
         }
+
         return $result;
     }
 
