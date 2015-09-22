@@ -3,118 +3,125 @@
 require_once(dirname(__FILE__) . '/../src/Engines.php');
 
 
-class RedisTreeEngineTest extends PHPUnit_Framework_TestCase {
+class RedisTreeEngineTest extends PHPUnit_Framework_TestCase
+{
 
 
-   private $cache = 'RedisTree';
+    private $cache = 'RedisTree';
 
-   public function setUp() {
+    public function setUp()
+    {
 
-      // Comment this to use real redis server
-      $factory = new \M6Web\Component\RedisMock\RedisMockFactory();
-      $redisMock = $factory->getAdapter('Predis\Client', true);
-      CacheMock::config($this->cache, array(
-         'engine' => 'RedisTreeMock',
-         'duration' => 4
-      ));
-      CacheMock::setEngine($this->cache, $redisMock);
+        // Comment this to use real redis server
+        $factory = new \M6Web\Component\RedisMock\RedisMockFactory();
+        $redisMock = $factory->getAdapter('Predis\Client', true);
+        CacheMock::config($this->cache, array(
+            'engine' => 'RedisTreeMock',
+            'duration' => 4
+        ));
+        CacheMock::setEngine($this->cache, $redisMock);
 
-      // Uncomment this to use real redis server
-      // CacheMock::config($this->cache, array(
-      //    'engine' => 'RedisTree',
-      //    'duration' => 4
-      // ));
-
-
-   } // End function setUp()
+        // Uncomment this to use real redis server
+        // CacheMock::config($this->cache, array(
+        //    'engine' => 'RedisTree',
+        //    'duration' => 4
+        // ));
 
 
-   public function tearDown() {
+    }
 
 
-   } // End functiuon tearDown()
+    public function tearDown()
+    {
 
 
-   function testRead() {
-
-      $key = 'RedisTreeEngine:TestKey:R';
-      $value = date('Y-m-d h:m');
-      CacheMock::write($key, $value, $this->cache);
-      $this->assertEquals($value, CacheMock::read($key, $this->cache));
-
-      CacheMock::delete($key);
-
-   } // End function testRead()
+    }
 
 
-   function testMultiWriteReadNoPrefix() {
+    public function testRead()
+    {
 
-      $key1 = 'RedisTreeEngine:TestKey:R:1';
-      $key2 = 'RedisTreeEngine:TestKey:R:2';
-      $multiKey = '[' . $key1 . ',' . $key2 . ']';
+        $key = 'RedisTreeEngine:TestKey:R';
+        $value = date('Y-m-d h:m');
+        CacheMock::write($key, $value, $this->cache);
+        $this->assertEquals($value, CacheMock::read($key, $this->cache));
 
-      $value1 = date('Y-m-d h:m') . ':1';
-      $value2 = date('Y-m-d h:m') . ':2';
-      $values = array(
-          $value1,
-          $value2
-      );
+        CacheMock::delete($key);
 
-      CacheMock::write($multiKey, $values, $this->cache);
-
-      $multiVal = CacheMock::read($multiKey, $this->cache);
-
-      $this->assertInternalType('array', $multiVal);
-      $this->assertEquals(2, count($multiVal));
-      $first = $multiVal[0];
-      $this->assertEquals($first, $value1);
-      $second = $multiVal[1];
-      $this->assertEquals($second, $value2);
-
-      CacheMock::delete($key1);
-      CacheMock::delete($key2);
-
-   } // End function testMultiRead()
-
-   function testMultiWriteReadWithPrefix() {
-
-      $key1 = 'RedisTreeEngine:TestKey:R:1';
-      $key2 = 'RedisTreeEngine:TestKey:R:2';
-      $multiKey = 'alist:[' . $key1 . ',' . $key2 . ']';
-
-      $value1 = date('Y-m-d h:m') . ':1';
-      $value2 = date('Y-m-d h:m') . ':2';
-      $values = array(
-          $value1,
-          $value2
-      );
-
-      CacheMock::write($multiKey, $values, $this->cache);
-
-      $multiVal = CacheMock::read($multiKey, $this->cache);
-
-      $this->assertInternalType('array', $multiVal);
-      $this->assertEquals(2, count($multiVal));
-      $first = $multiVal[0];
-      $this->assertEquals($first, $value1);
-      $second = $multiVal[1];
-      $this->assertEquals($second, $value2);
-
-      CacheMock::delete($key1);
-      CacheMock::delete($key2);
-
-   } // End function testMultiRead()
+    }
 
 
-   function testWrite() {
+    public function testMultiWriteReadNoPrefix()
+    {
 
-      $key = 'RedisTreeEngine:TestKey:W';
-      $value = date('Y-m-d h:m');
-      CacheMock::write($key, $value, $this->cache);
-      sleep(2);
-      $this->assertEquals($value, CacheMock::read($key, $this->cache));
-      sleep(3);
-      $this->assertNull(CacheMock::read($key, $this->cache));
+        $key1 = 'RedisTreeEngine:TestKey:R:1';
+        $key2 = 'RedisTreeEngine:TestKey:R:2';
+        $multiKey = '[' . $key1 . ',' . $key2 . ']';
+
+        $value1 = date('Y-m-d h:m') . ':1';
+        $value2 = date('Y-m-d h:m') . ':2';
+        $values = array(
+            $value1,
+            $value2
+        );
+
+        CacheMock::write($multiKey, $values, $this->cache);
+
+        $multiVal = CacheMock::read($multiKey, $this->cache);
+
+        $this->assertInternalType('array', $multiVal);
+        $this->assertEquals(2, count($multiVal));
+        $first = $multiVal[0];
+        $this->assertEquals($first, $value1);
+        $second = $multiVal[1];
+        $this->assertEquals($second, $value2);
+
+        CacheMock::delete($key1);
+        CacheMock::delete($key2);
+
+    }
+
+    public function testMultiWriteReadWithPrefix()
+    {
+
+        $key1 = 'RedisTreeEngine:TestKey:R:1';
+        $key2 = 'RedisTreeEngine:TestKey:R:2';
+        $multiKey = 'alist:[' . $key1 . ',' . $key2 . ']';
+
+        $value1 = date('Y-m-d h:m') . ':1';
+        $value2 = date('Y-m-d h:m') . ':2';
+        $values = array(
+            $value1,
+            $value2
+        );
+
+        CacheMock::write($multiKey, $values, $this->cache);
+
+        $multiVal = CacheMock::read($multiKey, $this->cache);
+
+        $this->assertInternalType('array', $multiVal);
+        $this->assertEquals(2, count($multiVal));
+        $first = $multiVal[0];
+        $this->assertEquals($first, $value1);
+        $second = $multiVal[1];
+        $this->assertEquals($second, $value2);
+
+        CacheMock::delete($key1);
+        CacheMock::delete($key2);
+
+    }
+
+
+    public function testWrite()
+    {
+
+        $key = 'RedisTreeEngine:TestKey:W';
+        $value = date('Y-m-d h:m');
+        CacheMock::write($key, $value, $this->cache);
+        sleep(2);
+        $this->assertEquals($value, CacheMock::read($key, $this->cache));
+        sleep(3);
+        $this->assertNull(CacheMock::read($key, $this->cache));
 
       $nodes_key = CacheMock::getNodesKey($this->cache);
       $this->assertEquals(1,
@@ -135,10 +142,11 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase {
       $this->assertCount(1, $keys, "Wrong number of keys found");
       $this->assertEquals($specialKey, $keys[0], "Incorrect key");
 
-   } // End function testWrite()
+    }
 
 
-   function testDelete() {
+    public function testDelete()
+    {
 
       $node = 'RedisTreeEngine:TestKey:D';
       $key = $node.':';
@@ -155,8 +163,8 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase {
       $this->assertEquals(1, $deletedKeysCount, 'Incorrect number of keys deleted');
       $this->assertNull(CacheMock::read($otherKey, $this->cache), 'Key not deleted');
 
-      $deletedKeysCount = CacheMock::delete('RandomKeyDoesNotExists', $this->cache);
-      $this->assertEquals(0, $deletedKeysCount, 'Incorrect number of keys deleted');
+        $deletedKeysCount = CacheMock::delete('RandomKeyDoesNotExists', $this->cache);
+        $this->assertEquals(0, $deletedKeysCount, 'Incorrect number of keys deleted');
 
       //
       // Delete with *
@@ -229,28 +237,27 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase {
       // Cleanup
       CacheMock::delete($otherKey, $this->cache);
 
-   } // End function testDelete()
+    }
 
 
-   function testClear() {
+    public function testClear()
+    {
 
-      $key = 'RedisTreeEngineTestKey';
-      $otherKey = 'SomeOtherKey';
-      $keyOne = $key.'One';
-      $keyTwo = $key.'Two';
-      $value = date('Y-m-d h:m');
+        $key = 'RedisTreeEngineTestKey';
+        $otherKey = 'SomeOtherKey';
+        $keyOne = $key . 'One';
+        $keyTwo = $key . 'Two';
+        $value = date('Y-m-d h:m');
 
-      CacheMock::write($key, $value, $this->cache);
-      CacheMock::write($keyOne, $value, $this->cache);
-      CacheMock::write($keyTwo, $value, $this->cache);
-      CacheMock::write($otherKey, $value, $this->cache);
-      CacheMock::clear(false, $this->cache);
-      $this->assertNull(CacheMock::read($key, $this->cache), 'Key not deleted');
-      $this->assertNull(CacheMock::read($keyOne, $this->cache), 'Key not deleted');
-      $this->assertNull(CacheMock::read($keyTwo, $this->cache), 'Key not deleted');
-      $this->assertNull(CacheMock::read($otherKey, $this->cache), 'Key not deleted');
+        CacheMock::write($key, $value, $this->cache);
+        CacheMock::write($keyOne, $value, $this->cache);
+        CacheMock::write($keyTwo, $value, $this->cache);
+        CacheMock::write($otherKey, $value, $this->cache);
+        CacheMock::clear(false, $this->cache);
+        $this->assertNull(CacheMock::read($key, $this->cache), 'Key not deleted');
+        $this->assertNull(CacheMock::read($keyOne, $this->cache), 'Key not deleted');
+        $this->assertNull(CacheMock::read($keyTwo, $this->cache), 'Key not deleted');
+        $this->assertNull(CacheMock::read($otherKey, $this->cache), 'Key not deleted');
 
-   } // End testClear()
-
-
-} // End class RedisTreeCacheTest
+    }
+}
