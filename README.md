@@ -2,34 +2,29 @@ CakePHP Cache Engines
 =====================
 [![Build Status](https://api.travis-ci.org/Traackr/cakephp-cache-engines.png?branch=master)](https://travis-ci.org/Traackr/cakephp-cache-engines)
 
-This CakePHP plugin provide some addition cache engines that can be used by CakePHP.  
-We currently provide 3 cache engines
+This CakePHP plugin provides some additional cache engines that can be used by CakePHP.
 
-1. RedisTreeCacheEngine: Cache backed up by Redis. Support managing keys using wildcards
-2. FileTreeCacheEngine: Cache backed up using local files. Support managing keys using wildcards
-3. FallBackCacheEngine: Cache allows you to define 2 cache engines. One is used as the primary cache engine, the second is used if the primary fails
+We currently provide three cache engines:
 
+1. RedisTreeCacheEngine: Redis based cache that supports managing keys using wildcards
+2. FileTreeCacheEngine: Local filesystem based cache that supports managing keys using wildcards
+3. FallBackCacheEngine: Allows you to define two cache engines; the first engine is used as the primary cache engine.
+   The second cache engine is used only if the primary fails.
 
+##Installation
 
-Installing
-----------
+   ```bash
+   $ cd /path/to/cake/application/app
+   $ composer require traackr/cache-engines
+   $ composer update
+   ```
 
-These cache engines are provided as CakePHP plugins. To install them and have them available in your configuration, simply add this plugin to you `composer.json` dependencies. In your require section:
+##Configuring the Engines
 
-    "require": {
-        "traackr/cache-engines": "dev-master"
-    }
-
-Then you can simply do:
-
-    > php composer.phar update
-
-
-Usage
------
-
-To configure and use these cache engine, simply specify the cache engine name when you configure your cache. The `RedisTreeeEngine` and `FileTreeEngine` take the same argument as the `RedisEngine` and `FileEngine` that ship with CakePHP.
-For instance:
+To configure and use these cache engines, simply specify the cache engine name in the appropriate configuration file
+(this is typically `app/Config/bootstrap.php`, c.f., [CakePHP cache configuration documentation](http://book.cakephp.org/2.0/en/core-libraries/caching.html#configuring-cache-class)). The
+`RedisTreeeEngine` and `FileTreeEngine` take the same arguments as the `RedisEngine` and `FileEngine` that ship with
+CakePHP:
 
     Cache::config("post_data", array(
        'engine' => 'RedisTree',
@@ -38,8 +33,8 @@ For instance:
        'duration' => 300,
        'prefix' => 'posts:'
     ));
-    
-The `FallbackTreeEngine` expects a configuration for the primary and secondary engines:
+
+`FallbackEngine` expects a configuration for the primary and secondary engines:
 
     Cache::config("post_data", array(
        'engine' => 'Fallback',
@@ -58,4 +53,14 @@ The `FallbackTreeEngine` expects a configuration for the primary and secondary e
           'duration' => 300
        )
     ));
-    
+
+##Documentation
+
+All other documentation can be found in the [doc](https://github.com/Traackr/cakephp-cache-engines/blob/master/doc) folder.
+
+##Contributing
+
+* [Getting Started](https://github.com/Traackr/cakephp-cache-engines/blob/master/doc/CONTRIBUTING.md)
+* [Bug Reports](https://github.com/Traackr/cakephp-cache-engines/blob/master/doc/CONTRIBUTING.md#bug-reports)
+* [Feature Requests](https://github.com/Traackr/cakephp-cache-engines/blob/master/doc/CONTRIBUTING.md#feature-requests)
+* [Pull Requests](https://github.com/Traackr/cakephp-cache-engines/blob/master/doc/CONTRIBUTING.md#pull-requests)
