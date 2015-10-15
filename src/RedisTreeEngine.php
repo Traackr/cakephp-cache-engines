@@ -173,7 +173,7 @@ class RedisTreeEngine extends CacheEngine
             $this->redis->sadd($this->nodes_key, $path);
             $nodes[] = $path;
         }
-        // $this->redis->sadd($this->nodes_key, $nodes);
+
         if ($duration === 0) {
             return $this->redis->set($key, $value);
         }
@@ -283,8 +283,30 @@ class RedisTreeEngine extends CacheEngine
      */
     public function delete($key)
     {
+        // shortcut on empty key
+        if (empty($key)) {
+            return 0;
+        }
+
+        $key_node = '';
+        // Try to determine if the key is a node
+        if ($this->redis->sismember($this->nodes_key, $key) === 1) {
+            $key_node = $key;
+            $key .= $this->key_delim.'*';
+        } // If key ends with delimiter, automatically add
+        // * after the key to delete the entire node
+        elseif ($key[strlen($key)-1] === $this->key_delim) {
+            $key_node = substr($key, 0, strlen($key)-1);
+            $key .= '*';
+        }
+
+        // Retrieve all keys to delete
         $keys = $this->redis->keys($key);
-        // Check if there are any key to delete
+        // Delete node from list of nodes if deleting entire node
+        if (!empty($key_node)) {
+            $this->redis->srem($this->nodes_key, $key_node);
+        }
+        // Check if there are any key to delete and delete
         if (!empty($keys)) {
             return $this->redis->del($keys);
         } else {
@@ -300,35 +322,12 @@ class RedisTreeEngine extends CacheEngine
      */
     public function clear($check = false)
     {
-        // shortcut on empty key
-        if (empty($key)) {
-            return 0;
+        if ($check) {
+            return true;
         }
-
-        $key_node = '';
-        // Try to determine if the key is a node
-        if ($this->redis->sismember($this->nodes_key, $key) === 1) {
-            $key_node = $key;
-            $key .= $this->key_delim.'*';
-        } elseif ($key[strlen($key)-1] === $this->key_delim) {
-            // If key ends with delimiter, automatically add * after the key to delete the entire node
-            $key_node = substr($key, 0, strlen($key)-1);
-            $key .= '*';
-        }
-
-        // Retrieve all keys to delete
-        $keys = $this->redis->keys($key);
-        // Delete node from list of nodes if deleting entire node
-        if (!empty($key_node)) {
-            $this->redis->srem($this->nodes_key, $key_node);
-        }
-        // Check if there are any key to delete and delete
-        $result = 0;
-        if (!empty($keys)) {
-            $result = $this->redis->del($keys);
-        }
-
-        return $result;
+        $keys = $this->redis->keys($this->settings['prefix'] . '*');
+        $this->redis->del($keys);
+        return true;
     }
 
     /**
