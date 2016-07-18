@@ -279,7 +279,7 @@ class RedisTreeEngine extends CacheEngine
             $keys = $this->redis->keys($key);
         }
         else {
-            $keys = [$key];
+            $keys = array($key);
         }
 
         // Check if there are any key to delete
