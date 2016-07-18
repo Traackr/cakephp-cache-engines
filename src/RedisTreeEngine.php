@@ -274,8 +274,8 @@ class RedisTreeEngine extends CacheEngine
     {
 
         // keys() is an expensive call; only call it if we need to (i.e. if there actually is a wildcard);
-        // these chars seem to be the right ones to listen for according to: http://redis.io/commands/KEYS
-        if (strpbrk($key, '?*[') !== false) {
+        // the chars "?*[" seem to be the right ones to listen for according to: http://redis.io/commands/KEYS
+        if (preg_match('/[\?\*\[]/', $key)) {
             $keys = $this->redis->keys($key);
         }
         else {
