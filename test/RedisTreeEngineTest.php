@@ -46,12 +46,12 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase
         CacheMock::write($key, $value, $this->cache);
         $this->assertEquals($value, CacheMock::read($key, $this->cache));
 
-        CacheMock::delete($key);
+        CacheMock::delete($key, $this->cache);
 
     }
 
 
-    public function testMultiWriteReadNoPrefix()
+    public function testMultiWriteReadDeleteNoPrefix()
     {
 
         $key1 = 'RedisTreeEngine:TestKey:R:1';
@@ -76,12 +76,12 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase
         $second = $multiVal[1];
         $this->assertEquals($second, $value2);
 
-        CacheMock::delete($key1);
-        CacheMock::delete($key2);
-
+        CacheMock::delete($multiKey, $this->cache);
+        $this->assertNull(CacheMock::read($key1, $this->cache), 'Key 1 not deleted');
+        $this->assertNull(CacheMock::read($key2, $this->cache), 'Key 2 not deleted');
     }
 
-    public function testMultiWriteReadWithPrefix()
+    public function testMultiWriteReadDeleteWithPrefix()
     {
 
         $key1 = 'RedisTreeEngine:TestKey:R:1';
@@ -106,9 +106,9 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase
         $second = $multiVal[1];
         $this->assertEquals($second, $value2);
 
-        CacheMock::delete($key1);
-        CacheMock::delete($key2);
-
+        CacheMock::delete($multiKey, $this->cache);
+        $this->assertNull(CacheMock::read($key1, $this->cache), 'Key 1 not deleted');
+        $this->assertNull(CacheMock::read($key2, $this->cache), 'Key 2 not deleted');
     }
 
 

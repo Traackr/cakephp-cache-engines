@@ -272,7 +272,40 @@ class RedisTreeEngine extends CacheEngine
      */
     public function delete($key)
     {
+        // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
+        // a prefix configured by the user or left as null.
+        if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+            $keys = $this->parseMultiKey($key);
 
+            return $this->_mdelete($keys);
+        }
+
+        return $this->_delete($key);
+    }
+
+    /**
+     * Internal multi-val read.
+     * @param $keys
+     * @return array
+     * @throws Exception
+     */
+    private function _mdelete($keys)
+    {
+        // Check if there are any key to delete
+        if (!empty($keys)) {
+            return $this->redis->del($keys);
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
+     * Internal single-val delete.
+     * @param $key
+     * @return int|mixed
+     */
+    private function _delete($key)
+    {
         // keys() is an expensive call; only call it if we need to (i.e. if there actually is a wildcard);
         // the chars "?*[" seem to be the right ones to listen for according to: http://redis.io/commands/KEYS
         if (preg_match('/[\?\*\[]/', $key)) {

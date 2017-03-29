@@ -92,6 +92,37 @@ class FileTreeEngine extends FileEngine
     public function delete($key)
     {
 
+        //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code
+        if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+            $parts = str_replace(array('[', ']'), ',', $key);
+            $parts = explode(',', $parts);
+
+            //get rid of trailing empty (or beginning empty, if no prefix)
+            $parts = array_diff($parts, array(''));
+
+            //note that if there is no prefix, the array_diff above will leave us with an array whose first index is "1"
+            if (isset($parts[0])) {
+                $prefix = $parts[0];
+            } else {
+                $prefix = '';
+            }
+
+            $deletedKeysCount = 0;
+            for ($i = 1; $i < count($parts); $i++) {
+                $key = $prefix . $parts[$i];
+                $key = $this->settings['path'] . $this->key($key);
+                $f = new SplFileInfo($key);
+                parent::delete($f->getFilename());
+                $deletedKeysCount++;
+            }
+            return $deletedKeysCount;
+        }
+
+        return $this->_delete($key);
+
+    }
+
+    private function _delete($key) {
         $deletedKeysCount = 0;
         $keys = glob($this->settings['path'] . $this->key($key));
         foreach ($keys as $k) {
@@ -100,9 +131,7 @@ class FileTreeEngine extends FileEngine
             $deletedKeysCount++;
         }
         return $deletedKeysCount;
-
     }
-
 
     protected function _setKey($key, $createKey = false)
     {

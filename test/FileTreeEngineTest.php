@@ -105,7 +105,7 @@ class FileTreeEngineTest extends PHPUnit_Framework_TestCase
 
     }
 
-    public function testMultiWriteRead()
+    public function testMultiWriteReadDelete()
     {
 
         $key1 = 'FileTreeEngine:TestKey:R:1';
@@ -130,8 +130,9 @@ class FileTreeEngineTest extends PHPUnit_Framework_TestCase
         $second = $multiVal[1];
         $this->assertEquals($second, $value2);
 
-        Cache::delete($key1);
-        Cache::delete($key2);
+        Cache::delete($multiKey, $this->cache);
+        $this->assertFalse(Cache::read($key1, $this->cache), 'Key 1 not deleted');
+        $this->assertFalse(Cache::read($key2, $this->cache), 'Key 2 not deleted');
 
     }
 }
