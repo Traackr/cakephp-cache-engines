@@ -82,6 +82,20 @@ class FileTreeEngineTest extends PHPUnit_Framework_TestCase
 
         Cache::delete($otherKey);
 
+        $values = array_fill(0, 3, $value);
+        // now test multi-syntax with regex (no prefix)
+        CacheMock::write('[' . $keyOne . ',' . $keyTwo . ',' . $otherKey . ']', $values, $this->cache);
+        CacheMock::delete('[' . $key . '*,' . $otherKey . ']', $this->cache);
+        $this->assertFalse(CacheMock::read($keyOne, $this->cache), 'Key (1, no-prefix) not deleted');
+        $this->assertFalse(CacheMock::read($keyTwo, $this->cache), 'Key (2, no-prefix) not deleted');
+        $this->assertFalse(CacheMock::read($otherKey, $this->cache), 'Key (other, no-prefix) not deleted');
+
+        // now test multi-syntax with regex (with prefix)
+        CacheMock::write('alist:[' . $keyOne . ',' . $keyTwo . ',' . $otherKey . ']', $values, $this->cache);
+        CacheMock::delete('alist:[' . $key . '*,' . $otherKey . ']', $this->cache);
+        $this->assertFalse(CacheMock::read($keyOne, $this->cache), 'Key (1, prefix) not deleted');
+        $this->assertFalse(CacheMock::read($keyTwo, $this->cache), 'Key (2, prefix) not deleted');
+        $this->assertFalse(CacheMock::read($otherKey, $this->cache), 'Key (other, prefix) not deleted');
     }
 
     public function testClear()

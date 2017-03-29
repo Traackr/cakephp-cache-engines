@@ -165,14 +165,20 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase
 
         CacheMock::delete($otherKey, $this->cache);
 
-        // now test multi-syntax with regex
-        CacheMock::write($keyOne, $value, $this->cache);
-        CacheMock::write($keyTwo, $value, $this->cache);
-        CacheMock::write($otherKey, $value, $this->cache);
+        $values = array_fill(0, 3, $value);
+        // now test multi-syntax with regex (no prefix)
+        CacheMock::write('[' . $keyOne . ',' . $keyTwo . ',' . $otherKey . ']', $values, $this->cache);
         CacheMock::delete('[' . $key . '*,' . $otherKey . ']', $this->cache);
-        $this->assertNull(CacheMock::read($keyOne, $this->cache), 'Key not deleted');
-        $this->assertNull(CacheMock::read($keyTwo, $this->cache), 'Key not deleted');
-        $this->assertNull(CacheMock::read($otherKey, $this->cache), 'Key not deleted');
+        $this->assertNull(CacheMock::read($keyOne, $this->cache), 'Key (1, no-prefix) not deleted');
+        $this->assertNull(CacheMock::read($keyTwo, $this->cache), 'Key (2, no-prefix) not deleted');
+        $this->assertNull(CacheMock::read($otherKey, $this->cache), 'Key (other, no-prefix) not deleted');
+
+        // now test multi-syntax with regex (with prefix)
+        CacheMock::write('alist:[' . $keyOne . ',' . $keyTwo . ',' . $otherKey . ']', $values, $this->cache);
+        CacheMock::delete('alist:[' . $key . '*,' . $otherKey . ']', $this->cache);
+        $this->assertNull(CacheMock::read($keyOne, $this->cache), 'Key (1, prefix) not deleted');
+        $this->assertNull(CacheMock::read($keyTwo, $this->cache), 'Key (2, prefix) not deleted');
+        $this->assertNull(CacheMock::read($otherKey, $this->cache), 'Key (other, prefix) not deleted');
     }
 
 

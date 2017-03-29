@@ -110,10 +110,12 @@ class FileTreeEngine extends FileEngine
             $deletedKeysCount = 0;
             for ($i = 1; $i < count($parts); $i++) {
                 $key = $prefix . $parts[$i];
-                $key = $this->settings['path'] . $this->key($key);
-                $f = new SplFileInfo($key);
-                parent::delete($f->getFilename());
-                $deletedKeysCount++;
+                $keys = glob($this->settings['path'] . $this->key($key));
+                foreach ($keys as $k) {
+                    $f = new SplFileInfo($k);
+                    parent::delete($f->getFilename());
+                    $deletedKeysCount++;
+                }
             }
             return $deletedKeysCount;
         }
