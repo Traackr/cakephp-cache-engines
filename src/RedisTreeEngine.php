@@ -291,7 +291,7 @@ class RedisTreeEngine extends CacheEngine
      */
     private function _mdelete($keys)
     {
-        $finalKeys = [];
+        $finalKeys = array();
         
         foreach ($keys as $key) {
             // keys() is an expensive call; only call it if we need to (i.e. if there actually is a wildcard);
