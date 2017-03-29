@@ -3,7 +3,7 @@
 require_once(dirname(__FILE__) . '/../src/Engines.php');
 
 
-class RedisTreeEngineTest extends PHPUnit_Framework_TestCase
+class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
 {
 
 
@@ -13,6 +13,7 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase
     {
 
         // Comment this to use real redis server
+        /**/
         $factory = new \M6Web\Component\RedisMock\RedisMockFactory();
         $redisMock = $factory->getAdapter('Predis\Client', true);
         CacheMock::config($this->cache, array(
@@ -20,12 +21,15 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase
             'duration' => 4
         ));
         CacheMock::setEngine($this->cache, $redisMock);
+        /**/
 
         // Uncomment this to use real redis server
-        // CacheMock::config($this->cache, array(
-        //    'engine' => 'RedisTree',
-        //    'duration' => 4
-        // ));
+        /*
+         CacheMock::config($this->cache, array(
+            'engine' => 'RedisTree',
+            'duration' => 4
+         ));
+        /**/
 
 
     }

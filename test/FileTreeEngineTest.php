@@ -2,7 +2,7 @@
 
 require_once(dirname(__FILE__) . '/../src/Engines.php');
 
-class FileTreeEngineTest extends PHPUnit_Framework_TestCase
+class FileTreeEngineTest extends \PHPUnit\Framework\TestCase
 {
 
     private $cache = 'FileTree';
