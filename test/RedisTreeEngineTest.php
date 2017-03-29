@@ -165,6 +165,14 @@ class RedisTreeEngineTest extends PHPUnit_Framework_TestCase
 
         CacheMock::delete($otherKey, $this->cache);
 
+        // now test multi-syntax with regex
+        CacheMock::write($keyOne, $value, $this->cache);
+        CacheMock::write($keyTwo, $value, $this->cache);
+        CacheMock::write($otherKey, $value, $this->cache);
+        CacheMock::delete('[' . $key . '*,' . $otherKey . ']', $this->cache);
+        $this->assertNull(CacheMock::read($keyOne, $this->cache), 'Key not deleted');
+        $this->assertNull(CacheMock::read($keyTwo, $this->cache), 'Key not deleted');
+        $this->assertNull(CacheMock::read($otherKey, $this->cache), 'Key not deleted');
     }
 
 
