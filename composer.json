@@ -31,7 +31,7 @@
     "predis/predis": "v1.1.*"
   },
   "require-dev": {
-    "phpunit/phpunit": "6.0.*",
+    "phpunit/phpunit": "4.8.*",
     "cakephp/cakephp": "2.8.*",
     "m6web/redis-mock": "v2.8.*"
   },
