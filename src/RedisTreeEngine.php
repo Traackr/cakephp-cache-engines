@@ -349,7 +349,6 @@ class RedisTreeEngine extends CacheEngine
         // the chars "?*[" seem to be the right ones to listen for according to: http://redis.io/commands/KEYS
         if (preg_match('/[\?\*\[]/', $key)) {
             if ($this->supportsScan) {
-            var_dump('scaning');
                 $keys = array();
                 foreach (new Iterator\Keyspace($this->redis, $key) as $currKey) {
                     $keys[] = $currKey;
