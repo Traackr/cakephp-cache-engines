@@ -1,5 +1,7 @@
 <?php
 
+use Predis\Collection\Iterator;
+
 /**
  * Redis storage engine for cache.
  *
@@ -13,6 +15,11 @@ class RedisTreeEngine extends CacheEngine
      * Redis wrapper.
      */
     protected $redis = null;
+    
+    /**
+     * Needs to be protected, not private since it's reset in RedisTreeMockEngine
+     */
+    protected $supportsScan = false;
 
     /**
      * Settings
@@ -66,8 +73,17 @@ class RedisTreeEngine extends CacheEngine
             return false;
         }
 
+        $profile = $this->redis->getProfile();
+        // profile is empty for redis-mock
+        $this->supportsScan = !empty($profile) && $profile->supportsCommand('scan');
+
         return true;
 
+    }
+
+    public function keys()
+    {
+        return $this->redis->keys('*');
     }
 
     /*
@@ -272,11 +288,75 @@ class RedisTreeEngine extends CacheEngine
      */
     public function delete($key)
     {
+        // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
+        // a prefix configured by the user or left as null.
+        if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+            $keys = $this->parseMultiKey($key);
 
+            return $this->_mdelete($keys);
+        }
+
+        return $this->_delete($key);
+    }
+
+    /**
+     * Internal multi-val read.
+     * @param $keys
+     * @return array
+     * @throws Exception
+     */
+    private function _mdelete($keys)
+    {
+        $finalKeys = array();
+        
+        foreach ($keys as $key) {
+            // keys() is an expensive call; only call it if we need to (i.e. if there actually is a wildcard);
+            // the chars "?*[" seem to be the right ones to listen for according to: http://redis.io/commands/KEYS
+            if (preg_match('/[\?\*\[]/', $key)) {
+            
+                if ($this->supportsScan) {
+                    $currKeys = array();
+                    foreach (new Iterator\Keyspace($this->redis, $key) as $currKey) {
+                        $currKeys[] = $currKey;
+                    }
+                    $finalKeys = array_merge($finalKeys, $currKeys);
+                }
+                else {
+                    $finalKeys = array_merge($finalKeys, $this->redis->keys($key));
+                }
+            }
+            else {
+                $finalKeys[] = $key;
+            }
+        }
+
+        // Check if there are any key to delete
+        if (!empty($finalKeys)) {
+            return $this->redis->del($finalKeys);
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
+     * Internal single-val delete.
+     * @param $key
+     * @return int|mixed
+     */
+    private function _delete($key)
+    {
         // keys() is an expensive call; only call it if we need to (i.e. if there actually is a wildcard);
         // the chars "?*[" seem to be the right ones to listen for according to: http://redis.io/commands/KEYS
         if (preg_match('/[\?\*\[]/', $key)) {
-            $keys = $this->redis->keys($key);
+            if ($this->supportsScan) {
+                $keys = array();
+                foreach (new Iterator\Keyspace($this->redis, $key) as $currKey) {
+                    $keys[] = $currKey;
+                }
+            }
+            else {
+                $keys = $this->redis->keys($key);
+            }
         }
         else {
             $keys = array($key);
@@ -303,8 +383,18 @@ class RedisTreeEngine extends CacheEngine
         if ($check) {
             return true;
         }
-        $keys = $this->redis->keys($this->settings['prefix'] . '*');
+        
+        if ($this->supportsScan) {
+            $keys = array();
+            foreach (new Iterator\Keyspace($this->redis, $this->settings['prefix'] . '*') as $currKey) {
+                $keys[] = $currKey;
+            }
+        }
+        else {
+            $keys = $this->redis->keys($this->settings['prefix'] . '*');
+        }
         $this->redis->del($keys);
+
         return true;
 
     }
