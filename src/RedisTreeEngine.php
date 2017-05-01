@@ -273,7 +273,15 @@ class RedisTreeEngine extends CacheEngine
     public function delete($key)
     {
 
-        $keys = $this->redis->keys($key);
+        // keys() is an expensive call; only call it if we need to (i.e. if there actually is a wildcard);
+        // the chars "?*[" seem to be the right ones to listen for according to: http://redis.io/commands/KEYS
+        if (preg_match('/[\?\*\[]/', $key)) {
+            $keys = $this->redis->keys($key);
+        }
+        else {
+            $keys = array($key);
+        }
+
         // Check if there are any key to delete
         if (!empty($keys)) {
             return $this->redis->del($keys);
