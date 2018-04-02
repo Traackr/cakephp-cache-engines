@@ -3,7 +3,7 @@
 require_once(dirname(__FILE__) . '/../src/Engines.php');
 
 
-class FallbackEngineTest extends PHPUnit_Framework_TestCase
+class FallbackEngineTest extends \PHPUnit\Framework\TestCase
 {
 
     private $cacheOne = 'fallbackOne';
