@@ -1,21 +1,18 @@
 <?php
+use Predis\Client;
 
-require_once(dirname(__FILE__) . '/../src/Engines.php');
-
+require_once __DIR__ . '/../src/Engines.php';
 
 class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
 {
-
-
     private $cache = 'RedisTree';
 
     public function setUp()
     {
-
         // Comment this to use real redis server
         /**/
         $factory = new \M6Web\Component\RedisMock\RedisMockFactory();
-        $redisMock = $factory->getAdapter('Predis\Client', true);
+        $redisMock = $factory->getAdapter(Client::class, true);
         CacheMock::config($this->cache, array(
             'engine' => 'RedisTreeMock',
             'duration' => 4
@@ -30,34 +27,20 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
             'duration' => 4
          ));
         /**/
-
-
     }
-
-
-    public function tearDown()
-    {
-
-
-    }
-
 
     public function testRead()
     {
-
         $key = 'RedisTreeEngine:TestKey:R';
         $value = date('Y-m-d h:m');
         CacheMock::write($key, $value, $this->cache);
         $this->assertEquals($value, CacheMock::read($key, $this->cache));
 
         CacheMock::delete($key, $this->cache);
-
     }
-
 
     public function testMultiWriteReadDeleteNoPrefix()
     {
-
         $key1 = 'RedisTreeEngine:TestKey:R:1';
         $key2 = 'RedisTreeEngine:TestKey:R:2';
         $multiKey = '[' . $key1 . ',' . $key2 . ']';
@@ -74,7 +57,7 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
         $multiVal = CacheMock::read($multiKey, $this->cache);
 
         $this->assertInternalType('array', $multiVal);
-        $this->assertEquals(2, count($multiVal));
+        $this->assertCount(2, $multiVal);
         $first = $multiVal[0];
         $this->assertEquals($first, $value1);
         $second = $multiVal[1];
@@ -87,7 +70,6 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
 
     public function testMultiWriteReadDeleteWithPrefix()
     {
-
         $key1 = 'RedisTreeEngine:TestKey:R:1';
         $key2 = 'RedisTreeEngine:TestKey:R:2';
         $multiKey = 'alist:[' . $key1 . ',' . $key2 . ']';
@@ -104,7 +86,7 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
         $multiVal = CacheMock::read($multiKey, $this->cache);
 
         $this->assertInternalType('array', $multiVal);
-        $this->assertEquals(2, count($multiVal));
+        $this->assertCount(2, $multiVal);
         $first = $multiVal[0];
         $this->assertEquals($first, $value1);
         $second = $multiVal[1];
@@ -115,10 +97,8 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
         $this->assertNull(CacheMock::read($key2, $this->cache), 'Key 2 not deleted');
     }
 
-
     public function testWrite()
     {
-
         $key = 'RedisTreeEngine:TestKey:W';
         $value = date('Y-m-d h:m');
         CacheMock::write($key, $value, $this->cache);
@@ -132,15 +112,12 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
         CacheMock::write($specialKey, $value, $this->cache);
         $this->assertEquals($value, CacheMock::read($specialKey, $this->cache));
         $keys = CacheMock::keys($this->cache);
-        $this->assertCount(1, $keys, "Wrong number of keys found");
-        $this->assertEquals($specialKey, $keys[0], "Incorrect key");
-
+        $this->assertCount(1, $keys, 'Wrong number of keys found');
+        $this->assertEquals($specialKey, $keys[0], 'Incorrect key');
     }
-
 
     public function testDelete()
     {
-
         $key = 'RedisTreeEngine:TestKey:D:';
         $otherKey = 'SomeOtherKey';
         $keyOne = $key . 'One';
@@ -185,10 +162,8 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
         $this->assertNull(CacheMock::read($otherKey, $this->cache), 'Key (other, prefix) not deleted');
     }
 
-
     public function testClear()
     {
-
         $key = 'RedisTreeEngineTestKey';
         $otherKey = 'SomeOtherKey';
         $keyOne = $key . 'One';
@@ -204,6 +179,5 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
         $this->assertNull(CacheMock::read($keyOne, $this->cache), 'Key not deleted');
         $this->assertNull(CacheMock::read($keyTwo, $this->cache), 'Key not deleted');
         $this->assertNull(CacheMock::read($otherKey, $this->cache), 'Key not deleted');
-
     }
 }

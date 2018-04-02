@@ -1,5 +1,4 @@
 <?php
-
 use Predis\Collection\Iterator;
 
 /**
@@ -10,12 +9,11 @@ use Predis\Collection\Iterator;
  */
 class RedisTreeEngine extends CacheEngine
 {
-
     /**
      * Redis wrapper.
      */
     protected $redis = null;
-    
+
     /**
      * Needs to be protected, not private since it's reset in RedisTreeMockEngine
      */
@@ -38,8 +36,7 @@ class RedisTreeEngine extends CacheEngine
      */
     public function init($settings = array())
     {
-
-        $settings += array_merge(array(
+        $settings = array_merge(array(
             'engine' => 'RedisTree',
             'server' => '127.0.0.1',
             'port' => 6379,
@@ -78,7 +75,6 @@ class RedisTreeEngine extends CacheEngine
         $this->supportsScan = !empty($profile) && $profile->supportsCommand('scan');
 
         return true;
-
     }
 
     public function keys()
@@ -92,9 +88,7 @@ class RedisTreeEngine extends CacheEngine
      */
     public function key($key)
     {
-
         return $key;
-
     }
 
     /**
@@ -108,7 +102,6 @@ class RedisTreeEngine extends CacheEngine
      */
     public function write($key, $value, $duration)
     {
-
         // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
         // a prefix configured by the user or left as null.
         if (strpos($key, '[') !== false && substr($key, -1) == ']') {
@@ -133,12 +126,10 @@ class RedisTreeEngine extends CacheEngine
      */
     private function _mwrite($key_value_array, $duration)
     {
-
         foreach ($key_value_array as $key => &$value) {
             if (!is_int($value)) {
                 $value = serialize($value);
             }
-
         }
         unset($value);
 
@@ -151,8 +142,8 @@ class RedisTreeEngine extends CacheEngine
         foreach ($key_value_array as $key => $value) {
             $this->redis->setex($key, $duration, $value);
         }
-        return $this->redis->exec();
 
+        return $this->redis->exec();
     }
 
     /**
@@ -164,7 +155,6 @@ class RedisTreeEngine extends CacheEngine
      */
     private function _write($key, $value, $duration)
     {
-
         if (!is_int($value)) {
             $value = serialize($value);
         }
@@ -173,7 +163,6 @@ class RedisTreeEngine extends CacheEngine
         }
 
         return $this->redis->setex($key, $duration, $value);
-
     }
 
     /**
@@ -184,7 +173,6 @@ class RedisTreeEngine extends CacheEngine
      */
     public function read($key)
     {
-
         // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
         // a prefix configured by the user or left as null.
         if (strpos($key, '[') !== false && substr($key, -1) == ']') {
@@ -194,7 +182,6 @@ class RedisTreeEngine extends CacheEngine
         }
 
         return $this->_read($key);
-
     }
 
     /**
@@ -205,30 +192,26 @@ class RedisTreeEngine extends CacheEngine
      */
     private function _mread($keys)
     {
-
         $items = $this->redis->mget($keys);
 
-        if (is_array($items)) {
-            $returnVal = array();
-
-            foreach ($items as $value) {
-                if (ctype_digit($value)) {
-                    $value = (int)$value;
-                }
-                if ($value !== false && is_string($value)) {
-                    $value = unserialize($value);
-                }
-
-                $returnVal[] = $value;
-
-            }
-
-            return $returnVal;
-
-        } else {
+        if (!is_array($items)) {
             throw new Exception('mget() should have returned array: ' . print_r($items, true));
         }
 
+        $returnVal = array();
+
+        foreach ($items as $value) {
+            if (ctype_digit($value)) {
+                $value = (int)$value;
+            }
+            if ($value !== false && is_string($value)) {
+                $value = unserialize($value);
+            }
+
+            $returnVal[] = $value;
+        }
+
+        return $returnVal;
     }
 
     /**
@@ -238,7 +221,6 @@ class RedisTreeEngine extends CacheEngine
      */
     private function _read($key)
     {
-
         $value = $this->redis->get($key);
         if (ctype_digit($value)) {
             $value = (int)$value;
@@ -246,8 +228,8 @@ class RedisTreeEngine extends CacheEngine
         if ($value !== false && is_string($value)) {
             $value = unserialize($value);
         }
-        return $value;
 
+        return $value;
     }
 
     /**
@@ -260,9 +242,7 @@ class RedisTreeEngine extends CacheEngine
      */
     public function increment($key, $offset = 1)
     {
-
         return $this->redis->incrBy($key, $offset);
-
     }
 
     /**
@@ -275,9 +255,7 @@ class RedisTreeEngine extends CacheEngine
      */
     public function decrement($key, $offset = 1)
     {
-
         return $this->redis->decrBy($key, $offset);
-
     }
 
     /**
@@ -308,24 +286,21 @@ class RedisTreeEngine extends CacheEngine
     private function _mdelete($keys)
     {
         $finalKeys = array();
-        
+
         foreach ($keys as $key) {
             // keys() is an expensive call; only call it if we need to (i.e. if there actually is a wildcard);
             // the chars "?*[" seem to be the right ones to listen for according to: http://redis.io/commands/KEYS
             if (preg_match('/[\?\*\[]/', $key)) {
-            
                 if ($this->supportsScan) {
                     $currKeys = array();
                     foreach (new Iterator\Keyspace($this->redis, $key) as $currKey) {
                         $currKeys[] = $currKey;
                     }
                     $finalKeys = array_merge($finalKeys, $currKeys);
-                }
-                else {
+                } else {
                     $finalKeys = array_merge($finalKeys, $this->redis->keys($key));
                 }
-            }
-            else {
+            } else {
                 $finalKeys[] = $key;
             }
         }
@@ -333,11 +308,11 @@ class RedisTreeEngine extends CacheEngine
         // Check if there are any key to delete
         if (!empty($finalKeys)) {
             return $this->redis->del($finalKeys);
-        } else {
-            return 0;
         }
+
+        return 0;
     }
-    
+
     /**
      * Internal single-val delete.
      * @param $key
@@ -353,22 +328,19 @@ class RedisTreeEngine extends CacheEngine
                 foreach (new Iterator\Keyspace($this->redis, $key) as $currKey) {
                     $keys[] = $currKey;
                 }
-            }
-            else {
+            } else {
                 $keys = $this->redis->keys($key);
             }
-        }
-        else {
+        } else {
             $keys = array($key);
         }
 
         // Check if there are any key to delete
         if (!empty($keys)) {
             return $this->redis->del($keys);
-        } else {
-            return 0;
         }
 
+        return 0;
     }
 
     /**
@@ -379,24 +351,21 @@ class RedisTreeEngine extends CacheEngine
      */
     public function clear($check = false)
     {
-
         if ($check) {
             return true;
         }
-        
+
         if ($this->supportsScan) {
             $keys = array();
             foreach (new Iterator\Keyspace($this->redis, $this->settings['prefix'] . '*') as $currKey) {
                 $keys[] = $currKey;
             }
-        }
-        else {
+        } else {
             $keys = $this->redis->keys($this->settings['prefix'] . '*');
         }
         $this->redis->del($keys);
 
         return true;
-
     }
 
     /**
@@ -417,6 +386,7 @@ class RedisTreeEngine extends CacheEngine
             }
             $result[] = $group . $value;
         }
+
         return $result;
     }
 
@@ -443,8 +413,8 @@ class RedisTreeEngine extends CacheEngine
         $prefix = $matches[1];
 
         $keys = array();
-        foreach (explode(",", $matches[2]) as $key) {
-            $keys[] = $prefix . trim($key);
+        foreach (explode(",", $matches[2]) as $match) {
+            $keys[] = $prefix . trim($match);
         }
 
         return $keys;

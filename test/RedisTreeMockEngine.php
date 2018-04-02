@@ -5,7 +5,6 @@
  */
 class RedisTreeMockEngine extends RedisTreeEngine
 {
-
     public function setRedis($redis)
     {
         $this->redis = $redis;
@@ -13,5 +12,4 @@ class RedisTreeMockEngine extends RedisTreeEngine
         // profile is empty for redis-mock
         $this->supportsScan = !empty($profile) && $profile->supportsCommand('scan');
     }
-
 }

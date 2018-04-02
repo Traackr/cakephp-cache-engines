@@ -7,7 +7,6 @@
  */
 class CacheMock extends Cache
 {
-
     public static function setEngine($name, $engine)
     {
         self::$_engines[$name]->setRedis($engine);

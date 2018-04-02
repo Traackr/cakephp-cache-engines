@@ -1,19 +1,18 @@
 <?php
 
-require_once(dirname(__FILE__) . '/../src/Engines.php');
+use Predis\Client;
 
+require_once __DIR__ . '/../src/Engines.php';
 
 class FallbackEngineTest extends \PHPUnit\Framework\TestCase
 {
-
     private $cacheOne = 'fallbackOne';
     private $cacheTwo = 'fallbackTwo';
 
     public function setUp()
     {
-
         $factory = new \M6Web\Component\RedisMock\RedisMockFactory();
-        $redisMock = $factory->getAdapter('Predis\Client', true);
+        $redisMock = $factory->getAdapter(Client::class, true);
 
         Cache::config($this->cacheOne, array(
             'engine' => 'FallbackMock',
@@ -29,20 +28,10 @@ class FallbackEngineTest extends \PHPUnit\Framework\TestCase
             'primary' => array('engine' => 'FileTree', 'duration' => 60),
             'secondary' => array('engine' => 'FileTree', 'duration' => 60)
         ));
-
     }
-
-
-    public function tearDown()
-    {
-
-
-    }
-
 
     public function testFallback()
     {
-
         $key = 'FallbackEngineTestKey';
         $value = date('Y-m-d h:m');
 
@@ -50,17 +39,16 @@ class FallbackEngineTest extends \PHPUnit\Framework\TestCase
 
         CacheMock::write($key, $value, $this->cacheOne);
         $this->assertEquals($value, CacheMock::read($key, $this->cacheOne));
-        $this->assertFalse(file_exists(CACHE . DS . $fileCacheSettings['prefix'] . 'fallbackenginetestkey'));
+        $this->assertFileNotExists(CACHE . DS . $fileCacheSettings['prefix'] . 'fallbackenginetestkey');
         CacheMock::delete($key, $this->cacheOne);
 
         CacheMock::fallback($this->cacheOne);
 
         CacheMock::write($key, $value, $this->cacheOne);
         $this->assertEquals($value, CacheMock::read($key, $this->cacheOne));
-        $this->assertTrue(file_exists(CACHE . DS . $fileCacheSettings['prefix'] . 'fallbackenginetestkey'));
+        $this->assertFileExists(CACHE . DS . $fileCacheSettings['prefix'] . 'fallbackenginetestkey');
 
         CacheMock::delete($key, $this->cacheOne);
-
     }
 
     /**
@@ -68,18 +56,15 @@ class FallbackEngineTest extends \PHPUnit\Framework\TestCase
      */
     public function testInitMissingName()
     {
-
         Cache::config('random', array(
             'engine' => 'FallbackMock',
             'primary' => array('engine' => 'RedisTreeMock', 'duration' => 60),
             'secondary' => array('engine' => 'FileTree', 'duration' => 60)
         ));
-
     }
 
     public function testInit()
     {
-
         $key = 'FallbackEngineTestKey';
         $value = date('Y-m-d h:m');
 
@@ -87,11 +72,9 @@ class FallbackEngineTest extends \PHPUnit\Framework\TestCase
 
         CacheMock::write($key, $value, $this->cacheTwo);
         $this->assertEquals($value, CacheMock::read($key, $this->cacheTwo));
-        $this->assertTrue(
-            file_exists(CACHE . DS . $fileCacheSettings['prefix'] . 'fallbackenginetestkey'),
-            'Cache file not found'
+        $this->assertFileExists(
+            CACHE . DS . $fileCacheSettings['prefix'] . 'fallbackenginetestkey', 'Cache file not found'
         );
         CacheMock::delete($key, $this->cacheTwo);
-
     }
 }
