@@ -1,17 +1,13 @@
 <?php
-
-require_once(dirname(__FILE__) . '/../src/Engines.php');
-
+require_once __DIR__ . '/../src/Engines.php';
 
 class FallbackEngineTest extends \PHPUnit\Framework\TestCase
 {
-
     private $cacheOne = 'fallbackOne';
     private $cacheTwo = 'fallbackTwo';
 
     public function setUp()
     {
-
         $factory = new \M6Web\Component\RedisMock\RedisMockFactory();
         $redisMock = $factory->getAdapter('Predis\Client', true);
 
@@ -29,20 +25,10 @@ class FallbackEngineTest extends \PHPUnit\Framework\TestCase
             'primary' => array('engine' => 'FileTree', 'duration' => 60),
             'secondary' => array('engine' => 'FileTree', 'duration' => 60)
         ));
-
     }
-
-
-    public function tearDown()
-    {
-
-
-    }
-
 
     public function testFallback()
     {
-
         $key = 'FallbackEngineTestKey';
         $value = date('Y-m-d h:m');
 
@@ -60,7 +46,6 @@ class FallbackEngineTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue(file_exists(CACHE . DS . $fileCacheSettings['prefix'] . 'fallbackenginetestkey'));
 
         CacheMock::delete($key, $this->cacheOne);
-
     }
 
     /**
@@ -68,18 +53,15 @@ class FallbackEngineTest extends \PHPUnit\Framework\TestCase
      */
     public function testInitMissingName()
     {
-
         Cache::config('random', array(
             'engine' => 'FallbackMock',
             'primary' => array('engine' => 'RedisTreeMock', 'duration' => 60),
             'secondary' => array('engine' => 'FileTree', 'duration' => 60)
         ));
-
     }
 
     public function testInit()
     {
-
         $key = 'FallbackEngineTestKey';
         $value = date('Y-m-d h:m');
 
@@ -92,6 +74,5 @@ class FallbackEngineTest extends \PHPUnit\Framework\TestCase
             'Cache file not found'
         );
         CacheMock::delete($key, $this->cacheTwo);
-
     }
 }

@@ -13,7 +13,7 @@ class RedisTreeEngine extends CacheEngine
     /**
      * Redis wrapper.
      */
-    protected $redis = null;
+    protected $redis;
 
     /**
      * Needs to be protected, not private since it's reset in RedisTreeMockEngine
@@ -47,7 +47,7 @@ class RedisTreeEngine extends CacheEngine
      */
     public function init($settings = array())
     {
-        $settings += array_merge(array(
+        $settings = array_merge(array(
             'engine' => 'RedisTree',
             'server' => '127.0.0.1',
             'port' => 6379,
@@ -126,10 +126,10 @@ class RedisTreeEngine extends CacheEngine
     {
         // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
         // a prefix configured by the user or left as null.
-        if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+        if (strpos($key, '[') !== false && substr($key, -1) === ']') {
             $keys = $this->parseMultiKey($key);
 
-            if (count($keys) != count($value)) {
+            if (count($keys) !== count($value)) {
                 throw new Exception('Num keys != num values.');
             }
             $key_vals = array_combine($keys, $value);
@@ -184,7 +184,8 @@ class RedisTreeEngine extends CacheEngine
         $nodes = array();
         // Create an array of all nodes, drop latest since it's should be a leaf
         $path = '';
-        for ($i = 0; $i < sizeof($key_elms)-1; $i++) {
+        $keyElementCount = count($key_elms);
+        for ($i = 0; $i < $keyElementCount - 1; $i++) {
             $path .= ($i == 0 ? '' : $this->key_delim) . $key_elms[$i];
             $this->redis->sadd($this->nodes_key, $path);
             $nodes[] = $path;
@@ -203,12 +204,13 @@ class RedisTreeEngine extends CacheEngine
      * @param string $key Identifier for the data
      * @return mixed The cached data, or false if the data doesn't exist, has expired,
      *               or if there was an error fetching it
+     * @throws Exception
      */
     public function read($key)
     {
         // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
         // a prefix configured by the user or left as null.
-        if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+        if (strpos($key, '[') !== false && substr($key, -1) === ']') {
             $keys = $this->parseMultiKey($key);
 
             return $this->_mread($keys);
@@ -227,25 +229,24 @@ class RedisTreeEngine extends CacheEngine
     {
         $items = $this->redis->mget($keys);
 
-        if (is_array($items)) {
-            $returnVal = array();
-
-            foreach ($items as $value) {
-                if (ctype_digit($value)) {
-                    $value = (int)$value;
-                }
-                if ($value !== false && is_string($value)) {
-                    $value = unserialize($value);
-                }
-
-                $returnVal[] = $value;
-
-            }
-
-            return $returnVal;
-        } else {
+        if (!is_array($items)) {
             throw new Exception('mget() should have returned array: ' . print_r($items, true));
         }
+
+        $returnVal = array();
+
+        foreach ($items as $value) {
+            if (ctype_digit($value)) {
+                $value = (int)$value;
+            }
+            if ($value !== false && is_string($value)) {
+                $value = unserialize($value);
+            }
+
+            $returnVal[] = $value;
+        }
+
+        return $returnVal;
     }
 
     /**
@@ -295,13 +296,14 @@ class RedisTreeEngine extends CacheEngine
      * Delete a key from the cache
      *
      * @param string $key Identifier for the data
-     * @return boolean True if the value was successfully deleted, false if it didn't exist or couldn't be removed
+     * @return int True if the value was successfully deleted, false if it didn't exist or couldn't be removed
+     * @throws Exception
      */
     public function delete($key)
     {
         // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
         // a prefix configured by the user or left as null.
-        if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+        if (strpos($key, '[') !== false && substr($key, -1) === ']') {
             $keys = $this->parseMultiKey($key);
 
             return $this->_mdelete($keys);
@@ -313,7 +315,7 @@ class RedisTreeEngine extends CacheEngine
     /**
      * Internal multi-val read.
      * @param $keys
-     * @return array
+     * @return int
      * @throws Exception
      */
     private function _mdelete($keys)
@@ -324,19 +326,16 @@ class RedisTreeEngine extends CacheEngine
             // keys() is an expensive call; only call it if we need to (i.e. if there actually is a wildcard);
             // the chars "?*[" seem to be the right ones to listen for according to: http://redis.io/commands/KEYS
             if (preg_match('/[\?\*\[]/', $key)) {
-
                 if ($this->supportsScan) {
                     $currKeys = array();
                     foreach (new Iterator\Keyspace($this->redis, $key) as $currKey) {
                         $currKeys[] = $currKey;
                     }
                     $finalKeys = array_merge($finalKeys, $currKeys);
-                }
-                else {
+                } else {
                     $finalKeys = array_merge($finalKeys, $this->redis->keys($key));
                 }
-            }
-            else {
+            } else {
                 $finalKeys[] = $key;
             }
         }
@@ -344,9 +343,9 @@ class RedisTreeEngine extends CacheEngine
         // Check if there are any key to delete
         if (!empty($finalKeys)) {
             return $this->redis->del($finalKeys);
-        } else {
-            return 0;
         }
+
+        return 0;
     }
 
     /**
@@ -364,21 +363,19 @@ class RedisTreeEngine extends CacheEngine
                 foreach (new Iterator\Keyspace($this->redis, $key) as $currKey) {
                     $keys[] = $currKey;
                 }
-            }
-            else {
+            } else {
                 $keys = $this->redis->keys($key);
             }
-        }
-        else {
+        } else {
             $keys = array($key);
         }
 
         // Check if there are any key to delete
         if (!empty($keys)) {
             return $this->redis->del($keys);
-        } else {
-            return 0;
         }
+
+        return 0;
     }
 
     /**
@@ -398,8 +395,7 @@ class RedisTreeEngine extends CacheEngine
             foreach (new Iterator\Keyspace($this->redis, $this->settings['prefix'] . '*') as $currKey) {
                 $keys[] = $currKey;
             }
-        }
-        else {
+        } else {
             $keys = $this->redis->keys($this->settings['prefix'] . '*');
         }
         $this->redis->del($keys);
@@ -452,8 +448,8 @@ class RedisTreeEngine extends CacheEngine
         $prefix = $matches[1];
 
         $keys = array();
-        foreach (explode(",", $matches[2]) as $key) {
-            $keys[] = $prefix . trim($key);
+        foreach (explode(',', $matches[2]) as $match) {
+            $keys[] = $prefix . trim($match);
         }
 
         return $keys;

@@ -8,7 +8,6 @@
  */
 class FileTreeEngine extends FileEngine
 {
-
     /**
      * Enhanced read to handle combo keys surrounded by brackets
      * @param string $key
@@ -16,9 +15,8 @@ class FileTreeEngine extends FileEngine
      */
     public function read($key)
     {
-
         //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code
-        if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+        if (strpos($key, '[') !== false && substr($key, -1) === ']') {
             $parts = str_replace(array('[', ']'), ',', $key);
             $parts = explode(',', $parts);
 
@@ -33,7 +31,8 @@ class FileTreeEngine extends FileEngine
             }
 
             $returnVal = array();
-            for ($i = 1; $i < count($parts); $i++) {
+            $partsCount = count($parts);
+            for ($i = 1; $i < $partsCount; $i++) {
                 $key = $prefix . $parts[$i];
 
                 $returnVal[] = parent::read($key);
@@ -42,7 +41,6 @@ class FileTreeEngine extends FileEngine
         }
 
         return parent::read($key);
-
     }
 
     /**
@@ -55,9 +53,8 @@ class FileTreeEngine extends FileEngine
      */
     public function write($key, $data, $duration)
     {
-
         //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code
-        if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+        if (strpos($key, '[') !== false && substr($key, -1) === ']') {
             $parts = str_replace(array('[', ']'), ',', $key);
             $parts = explode(',', $parts);
 
@@ -72,7 +69,8 @@ class FileTreeEngine extends FileEngine
             }
 
             $success = true;
-            for ($i = 1; $i < count($parts); $i++) {
+            $partsCount = count($parts);
+            for ($i = 1; $i < $partsCount; $i++) {
                 $key = $prefix . $parts[$i];
 
                 if (!isset($data[$i - 1])) {
@@ -85,15 +83,12 @@ class FileTreeEngine extends FileEngine
         }
 
         return parent::write($key, $data, $duration);
-
     }
-
 
     public function delete($key)
     {
-
         //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code
-        if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+        if (strpos($key, '[') !== false && substr($key, -1) === ']') {
             $parts = str_replace(array('[', ']'), ',', $key);
             $parts = explode(',', $parts);
 
@@ -108,7 +103,8 @@ class FileTreeEngine extends FileEngine
             }
 
             $deletedKeysCount = 0;
-            for ($i = 1; $i < count($parts); $i++) {
+            $partsCount = count($parts);
+            for ($i = 1; $i < $partsCount; $i++) {
                 $key = $prefix . $parts[$i];
                 $keys = glob($this->settings['path'] . $this->key($key));
                 foreach ($keys as $k) {
@@ -121,10 +117,10 @@ class FileTreeEngine extends FileEngine
         }
 
         return $this->_delete($key);
-
     }
 
-    private function _delete($key) {
+    private function _delete($key)
+    {
         $deletedKeysCount = 0;
         $keys = glob($this->settings['path'] . $this->key($key));
         foreach ($keys as $k) {
@@ -147,8 +143,6 @@ class FileTreeEngine extends FileEngine
      */
     public function key($key)
     {
-
         return str_replace(array(DS, '/', '.', '<', '>', '?', ':', '|', ' ', '"'), '_', $key);
-
     }
 }

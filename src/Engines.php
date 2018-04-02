@@ -1,6 +1,6 @@
 <?php
 
 // Load all engines available
-require(dirname(__FILE__) . '/RedisTreeEngine.php');
-require(dirname(__FILE__) . '/FileTreeEngine.php');
-require(dirname(__FILE__) . '/FallbackEngine.php');
+require __DIR__ . '/RedisTreeEngine.php';
+require __DIR__ . '/FileTreeEngine.php';
+require __DIR__ . '/FallbackEngine.php';

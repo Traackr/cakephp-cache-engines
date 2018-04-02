@@ -7,19 +7,17 @@
  */
 class FallbackEngine extends CacheEngine
 {
-
     private $primaryConfig = 'primary';
     private $secondaryConfig = 'secondary';
 
     /*
      * The active of the 2 caches
      */
-    private $activeCache = null;
+    private $activeCache;
 
 
     public function init($settings = array())
     {
-
         $settings += array(
             'engine' => 'Fallback',
             'prefix' => '',
@@ -35,8 +33,8 @@ class FallbackEngine extends CacheEngine
         }
         // Generate unique config name
         $config = $this->settings['name'];
-        $this->primaryConfig = $config . "-" . $this->primaryConfig;
-        $this->secondaryConfig = $config . "-" . $this->secondaryConfig;
+        $this->primaryConfig = $config . '-' . $this->primaryConfig;
+        $this->secondaryConfig = $config . '-' . $this->secondaryConfig;
 
         try {
             if (isset($this->settings['primary']['engine'])) {
@@ -57,8 +55,8 @@ class FallbackEngine extends CacheEngine
                 return false;
             }
         }
-        return true;
 
+        return true;
     }
 
     public function write($key, $value, $duration)
@@ -89,7 +87,6 @@ class FallbackEngine extends CacheEngine
             $this->fallback();
             return Cache::delete($key, $this->activeCache);
         }
-
     }
 
     public function increment($key, $offset = 1)

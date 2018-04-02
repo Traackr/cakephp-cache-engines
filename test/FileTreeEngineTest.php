@@ -1,44 +1,30 @@
 <?php
-
-require_once(dirname(__FILE__) . '/../src/Engines.php');
+require_once __DIR__ . '/../src/Engines.php';
 
 class FileTreeEngineTest extends \PHPUnit\Framework\TestCase
 {
-
     private $cache = 'FileTree';
 
     public function setUp()
     {
-
         Cache::config($this->cache, array(
             'engine' => 'FileTree',
             'duration' => 4
         ));
-
     }
-
-
-    public function tearDown()
-    {
-
-    }
-
 
     public function testRead()
     {
-
         $key = 'FileTreeEngine:TestKey:R';
         $value = date('Y-m-d h:m');
         Cache::write($key, $value, $this->cache);
         $this->assertEquals($value, Cache::read($key, $this->cache));
 
         Cache::delete($key, $this->cache);
-
     }
 
     public function testWrite()
     {
-
         $key = 'FileTreeEngine:TestKey:W';
         $value = date('Y-m-d h:m');
         Cache::write($key, $value, $this->cache);
@@ -48,12 +34,10 @@ class FileTreeEngineTest extends \PHPUnit\Framework\TestCase
         $this->assertFalse(Cache::read($key, $this->cache));
 
         Cache::delete($key, $this->cache);
-
     }
 
     public function testDelete()
     {
-
         $key = 'FileTreeEngine:TestKey:D:';
         $otherKey = 'SomeOtherKey';
         $keyOne = $key . 'One';
@@ -100,7 +84,6 @@ class FileTreeEngineTest extends \PHPUnit\Framework\TestCase
 
     public function testClear()
     {
-
         $key = 'FileTreeEngine:TestKey:C:';
         $otherKey = 'SomeOtherKey';
         $keyOne = $key . 'One';
@@ -116,12 +99,10 @@ class FileTreeEngineTest extends \PHPUnit\Framework\TestCase
         $this->assertFalse(Cache::read($keyOne, $this->cache), 'Key not deleted');
         $this->assertFalse(Cache::read($keyTwo, $this->cache), 'Key not deleted');
         $this->assertFalse(Cache::read($otherKey, $this->cache), 'Key not deleted');
-
     }
 
     public function testMultiWriteReadDelete()
     {
-
         $key1 = 'FileTreeEngine:TestKey:R:1';
         $key2 = 'FileTreeEngine:TestKey:R:2';
         $multiKey = '[' . $key1 . ',' . $key2 . ']';
@@ -147,6 +128,5 @@ class FileTreeEngineTest extends \PHPUnit\Framework\TestCase
         Cache::delete($multiKey, $this->cache);
         $this->assertFalse(Cache::read($key1, $this->cache), 'Key 1 not deleted');
         $this->assertFalse(Cache::read($key2, $this->cache), 'Key 2 not deleted');
-
     }
 }

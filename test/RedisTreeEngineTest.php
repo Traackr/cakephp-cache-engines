@@ -1,5 +1,5 @@
 <?php
-require_once(dirname(__FILE__) . '/../src/Engines.php');
+require_once __DIR__ . '/../src/Engines.php';
 
 class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
 {
@@ -16,7 +16,6 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
             'duration' => 4
         ));
         CacheMock::setEngine($this->cache, $redisMock);
-        /**/
 
         // Uncomment this to use real redis server
         /*
@@ -24,13 +23,7 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
             'engine' => 'RedisTree',
             'duration' => 4
          ));
-        /**/
-
-
-    }
-
-    public function tearDown()
-    {
+        */
     }
 
     public function testRead()
@@ -41,7 +34,6 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($value, CacheMock::read($key, $this->cache));
 
         CacheMock::delete($key, $this->cache);
-
     }
 
     public function testMultiWriteReadDeleteNoPrefix()
@@ -134,8 +126,8 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
         CacheMock::write($specialKey, $value, $this->cache);
         $this->assertEquals($value, CacheMock::read($specialKey, $this->cache));
         $keys = CacheMock::keys('test-*', $this->cache);
-        $this->assertCount(1, $keys, "Wrong number of keys found");
-        $this->assertEquals($specialKey, $keys[0], "Incorrect key");
+        $this->assertCount(1, $keys, 'Wrong number of keys found');
+        $this->assertEquals($specialKey, $keys[0], 'Incorrect key');
     }
 
     public function testSimpleDelete()

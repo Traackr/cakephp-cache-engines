@@ -6,7 +6,6 @@
  */
 class RedisTreeMockEngine extends RedisTreeEngine
 {
-
     public function setEngine($redis)
     {
         $this->redis = $redis;
@@ -20,9 +19,9 @@ class RedisTreeMockEngine extends RedisTreeEngine
         return $this->redis;
     }
 
-    public function keys($pattern)
+    public function keys()
     {
-        return $this->redis->keys($pattern);
+        return $this->redis->keys();
     }
 
     public function sismember($key, $member)
