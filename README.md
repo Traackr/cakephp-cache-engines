@@ -40,6 +40,7 @@ CakePHP:
        'engine' => 'Fallback',
        'name' => "post_data",
        'primary' => array(
+          'profile' => '2.8', // optional, if you want to hardcode a predis profile to use
           'engine' => 'RedisTree',
           'server' => 'redis-server',
           'port' => 6379,

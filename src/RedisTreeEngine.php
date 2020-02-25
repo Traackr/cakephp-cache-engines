@@ -15,7 +15,7 @@ class RedisTreeEngine extends CacheEngine
      * Redis wrapper.
      */
     protected $redis = null;
-    
+
     /**
      * Needs to be protected, not private since it's reset in RedisTreeMockEngine
      */
@@ -56,11 +56,19 @@ class RedisTreeEngine extends CacheEngine
 
         if (!isset($this->redis)) {
             try {
-                $this->redis = new Predis\Client(array(
-                    'scheme' => 'tcp',
-                    'host' => $this->settings['server'],
-                    'port' => $this->settings['port'],
-                ));
+                if (isset($settings['profile'])) {
+                    $this->redis = new Predis\Client(array(
+                        'scheme' => 'tcp',
+                        'host' => $this->settings['server'],
+                        'port' => $this->settings['port'],
+                    ), array('profile' => $settings['profile']));
+                } else {
+                    $this->redis = new Predis\Client(array(
+                        'scheme' => 'tcp',
+                        'host' => $this->settings['server'],
+                        'port' => $this->settings['port'],
+                    ));
+                }
             } catch (Exception $e) {
                 // If creation fails, return false
                 return false;
@@ -308,12 +316,12 @@ class RedisTreeEngine extends CacheEngine
     private function _mdelete($keys)
     {
         $finalKeys = array();
-        
+
         foreach ($keys as $key) {
             // keys() is an expensive call; only call it if we need to (i.e. if there actually is a wildcard);
             // the chars "?*[" seem to be the right ones to listen for according to: http://redis.io/commands/KEYS
             if (preg_match('/[\?\*\[]/', $key)) {
-            
+
                 if ($this->supportsScan) {
                     $currKeys = array();
                     foreach (new Iterator\Keyspace($this->redis, $key) as $currKey) {
@@ -337,7 +345,7 @@ class RedisTreeEngine extends CacheEngine
             return 0;
         }
     }
-    
+
     /**
      * Internal single-val delete.
      * @param $key
@@ -383,7 +391,7 @@ class RedisTreeEngine extends CacheEngine
         if ($check) {
             return true;
         }
-        
+
         if ($this->supportsScan) {
             $keys = array();
             foreach (new Iterator\Keyspace($this->redis, $this->settings['prefix'] . '*') as $currKey) {
