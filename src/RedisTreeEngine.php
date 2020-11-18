@@ -12,7 +12,7 @@ class RedisTreeEngine extends CacheEngine
 {
 
     /**
-     * Redis wrapper.
+     * Redis wrapper
      */
     protected $redis = null;
 
@@ -20,6 +20,11 @@ class RedisTreeEngine extends CacheEngine
      * Needs to be protected, not private since it's reset in RedisTreeMockEngine
      */
     protected $supportsScan = false;
+
+    /**
+     * Scan count parameter; defaults to 10
+     */
+    protected $scanCount = 10;
 
     /**
      * Settings
@@ -84,6 +89,11 @@ class RedisTreeEngine extends CacheEngine
         $profile = $this->redis->getProfile();
         // profile is empty for redis-mock
         $this->supportsScan = !empty($profile) && $profile->supportsCommand('scan');
+        if ($this->supportsScan) {
+            if (isset($settings['scan_count'])) {
+                $this->scanCount = intval($settings['scan_count']);
+            }
+        }
 
         return true;
 
@@ -324,7 +334,7 @@ class RedisTreeEngine extends CacheEngine
 
                 if ($this->supportsScan) {
                     $currKeys = array();
-                    foreach (new Iterator\Keyspace($this->redis, $key) as $currKey) {
+                    foreach (new Iterator\Keyspace($this->redis, $key, $this->scanCount) as $currKey) {
                         $currKeys[] = $currKey;
                     }
                     $finalKeys = array_merge($finalKeys, $currKeys);
@@ -358,7 +368,7 @@ class RedisTreeEngine extends CacheEngine
         if (preg_match('/[\?\*\[]/', $key)) {
             if ($this->supportsScan) {
                 $keys = array();
-                foreach (new Iterator\Keyspace($this->redis, $key) as $currKey) {
+                foreach (new Iterator\Keyspace($this->redis, $key, $this->scanCount) as $currKey) {
                     $keys[] = $currKey;
                 }
             }
@@ -394,7 +404,7 @@ class RedisTreeEngine extends CacheEngine
 
         if ($this->supportsScan) {
             $keys = array();
-            foreach (new Iterator\Keyspace($this->redis, $this->settings['prefix'] . '*') as $currKey) {
+            foreach (new Iterator\Keyspace($this->redis, $this->settings['prefix'] . '*', $this->scanCount) as $currKey) {
                 $keys[] = $currKey;
             }
         }
