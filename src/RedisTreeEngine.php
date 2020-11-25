@@ -467,4 +467,47 @@ class RedisTreeEngine extends CacheEngine
 
         return $keys;
     }
+
+    /**
+     * Get the type of a key.
+     * If it does not exist 'None' will be returned.
+     * @param string $key
+     * @return string
+     */
+    public function type($key)
+    {
+        return $this->redis->type($key);
+    }
+
+    /**
+     * Returns the contents of a set.
+     * @param string $key
+     * @return array
+     */
+    public function sMembers($key)
+    {
+        return $this->redis->smembers($key);
+    }
+
+    /**
+     * Add an item(s) to a set.
+     * @param string $key
+     * @param string $items
+     * @return int
+     */
+    public function sAdd($key, ...$items)
+    {
+        return $this->redis->sadd($key, ...$items);
+    }
+
+    /**
+     * Remove item(s) from a set.
+     * @param string $key
+     * @param string $items
+     * @return int
+     */
+    public function sRem($key, ...$items)
+    {
+        return $this->redis->srem($key, ...$items);
+    }
 }
