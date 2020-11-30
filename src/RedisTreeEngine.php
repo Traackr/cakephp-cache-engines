@@ -121,10 +121,11 @@ class RedisTreeEngine extends CacheEngine
      * @param string $key Identifier for the data
      * @param mixed $value Data to be cached
      * @param integer $duration How long to cache the data, in seconds
+     * @param string $parentKey Parent key that data is a dependent child of
      * @return bool True if the data was successfully cached, false on failure
      * @throws Exception
      */
-    public function write($key, $value, $duration)
+    public function write($key, $value, $duration, $parentKey)
     {
 
         // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
@@ -137,37 +138,42 @@ class RedisTreeEngine extends CacheEngine
             }
             $key_vals = array_combine($keys, $value);
 
-            return $this->_mwrite($key_vals, $duration);
+            return $this->_mwrite($key_vals, $duration, $parentKey);
         }
 
-        return $this->_write($key, $value, $duration);
+        return $this->_write($key, $value, $duration, $parentKey);
     }
 
     /**
      * Internal multi-val write.
      * @param $key_value_array
      * @param $duration
+     * @param string $parentKey Parent key that data is a dependent child of
      * @return
      */
-    private function _mwrite($key_value_array, $duration)
+    private function _mwrite($key_value_array, $duration, $parentKey)
     {
 
         foreach ($key_value_array as $key => &$value) {
             if (!is_int($value)) {
                 $value = serialize($value);
             }
-
         }
         unset($value);
 
-        if ($duration === 0) {
-            return $this->redis->mset($key_value_array);
-        }
+        $keys = array_keys($key_value_array);
 
-        //note that there is no "msetex" in redis! must do this in a more convoluted way:
         $this->redis->multi();
-        foreach ($key_value_array as $key => $value) {
-            $this->redis->setex($key, $duration, $value);
+        if (!empty($parentKey)) {
+            $this->_writeChildRelationship($parentKey, ...$keys);
+        }
+        if ($duration === 0) {
+            $this->redis->mset($key_value_array);
+        } else {
+            // note that there is no "msetex" in redis! must do this in a more convoluted way:
+            foreach ($key_value_array as $key => $value) {
+                $this->redis->setex($key, $duration, $value);
+            }
         }
         return $this->redis->exec();
 
@@ -178,20 +184,25 @@ class RedisTreeEngine extends CacheEngine
      * @param $key
      * @param $value
      * @param $duration
+     * @param string $parentKey Parent key that data is a dependent child of
      * @return
      */
-    private function _write($key, $value, $duration)
+    private function _write($key, $value, $duration, $parentKey)
     {
 
         if (!is_int($value)) {
             $value = serialize($value);
         }
-        if ($duration === 0) {
-            return $this->redis->set($key, $value);
+        $this->redis->multi();
+        if (!empty($parentKey)) {
+            $this->_writeChildRelationship($parentKey, $key);
         }
-
-        return $this->redis->setex($key, $duration, $value);
-
+        if ($duration === 0) {
+            $this->redis->set($key, $value);
+        } else {
+            $this->redis->setex($key, $duration, $value);
+        }
+        return $this->redis->exec();
     }
 
     /**
@@ -331,20 +342,19 @@ class RedisTreeEngine extends CacheEngine
             // keys() is an expensive call; only call it if we need to (i.e. if there actually is a wildcard);
             // the chars "?*[" seem to be the right ones to listen for according to: http://redis.io/commands/KEYS
             if (preg_match('/[\?\*\[]/', $key)) {
-
                 if ($this->supportsScan) {
                     $currKeys = array();
                     foreach (new Iterator\Keyspace($this->redis, $key, $this->scanCount) as $currKey) {
                         $currKeys[] = $currKey;
                     }
                     $finalKeys = array_merge($finalKeys, $currKeys);
-                }
-                else {
+                } else {
                     $finalKeys = array_merge($finalKeys, $this->redis->keys($key));
                 }
-            }
-            else {
+            } else {
                 $finalKeys[] = $key;
+                $childKeys = $this->_getChildKeys($key);
+                $finalKeys = array_merge($finalKeys, $childKeys);
             }
         }
 
@@ -371,13 +381,13 @@ class RedisTreeEngine extends CacheEngine
                 foreach (new Iterator\Keyspace($this->redis, $key, $this->scanCount) as $currKey) {
                     $keys[] = $currKey;
                 }
-            }
-            else {
+            } else {
                 $keys = $this->redis->keys($key);
             }
-        }
-        else {
+        } else {
             $keys = array($key);
+            $childKeys = $this->_getChildKeys($key);
+            $keys = array_merge($keys, $childKeys);
         }
 
         // Check if there are any key to delete
@@ -407,8 +417,7 @@ class RedisTreeEngine extends CacheEngine
             foreach (new Iterator\Keyspace($this->redis, $this->settings['prefix'] . '*', $this->scanCount) as $currKey) {
                 $keys[] = $currKey;
             }
-        }
-        else {
+        } else {
             $keys = $this->redis->keys($this->settings['prefix'] . '*');
         }
         $this->redis->del($keys);
@@ -469,45 +478,46 @@ class RedisTreeEngine extends CacheEngine
     }
 
     /**
-     * Get the type of a key.
-     * If it does not exist 'None' will be returned.
-     * @param string $key
-     * @return string
+     * Get the key used to store the set of child keys.
+     *
+     * @param string $parentKey The key to get the child set key for
+     *
+     * @return string The child set's key
      */
-    public function type($key)
+    private function _getChildSetKey($parentKey)
     {
-        return $this->redis->type($key);
+        return $parentKey . ':child_keys';
     }
 
     /**
-     * Returns the contents of a set.
-     * @param string $key
-     * @return array
+     * Record a key(s) dependent association to another key.
+     *
+     * @param string $parentKey    The key the children as associated to
+     * @param string ...$childKeys The children to associate
+     *
+     * @return int number of keys added to set
      */
-    public function sMembers($key)
+    private function _writeChildRelationship($parentKey, ...$childKeys)
     {
-        return $this->redis->smembers($key);
+        $setKey = $this->_getChildSetKey($parentKey);
+        return $this->redis->sadd($setKey, ...$childKeys);
     }
 
     /**
-     * Add an item(s) to a set.
-     * @param string $key
-     * @param string $items
-     * @return int
+     * Get the child keys of a given key.
+     *
+     * @param string $parentKey The key the children are associated to
+     *
+     * @return array The child keys, including the child set key.
      */
-    public function sAdd($key, ...$items)
+    private function _getChildKeys($parentKey)
     {
-        return $this->redis->sadd($key, ...$items);
-    }
-
-    /**
-     * Remove item(s) from a set.
-     * @param string $key
-     * @param string $items
-     * @return int
-     */
-    public function sRem($key, ...$items)
-    {
-        return $this->redis->srem($key, ...$items);
+        $setKey = $this->_getChildSetKey($parentKey);
+        if ($this->redis->type($setKey) === 'set') {
+            $keys = $this->redis->smembers($setKey);
+            array_push($keys, $setKey);
+            return $keys;
+        }
+        return [];
     }
 }
