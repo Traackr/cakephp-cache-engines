@@ -121,7 +121,7 @@ class RedisTreeEngine extends CacheEngine
      * @param string $key Identifier for the data
      * @param mixed $value Data to be cached
      * @param integer $duration How long to cache the data, in seconds
-     * @param string $parentKey Optional parent key that data is a dependent child of
+     * @param string|array $parentKey Optional parent key that data is a dependent child of
      * @return bool True if the data was successfully cached, false on failure
      * @throws Exception
      */
@@ -148,7 +148,7 @@ class RedisTreeEngine extends CacheEngine
      * Internal multi-val write.
      * @param $key_value_array
      * @param $duration
-     * @param string $parentKey Parent key that data is a dependent child of
+     * @param string|array $parentKey Parent key that data is a dependent child of
      * @return
      */
     private function _mwrite($key_value_array, $duration, $parentKey)
@@ -165,7 +165,12 @@ class RedisTreeEngine extends CacheEngine
 
         $this->redis->multi();
         if (!empty($parentKey)) {
-            $this->_writeChildRelationship($parentKey, ...$keys);
+            if (!is_array($parentKey)) {
+                $parentKey = [$parentKey];
+            }
+            foreach ($parentKey as $pk) {
+                $this->_writeChildRelationship($pk, ...$keys);
+            }
         }
         if ($duration === 0) {
             $this->redis->mset($key_value_array);
@@ -184,7 +189,7 @@ class RedisTreeEngine extends CacheEngine
      * @param $key
      * @param $value
      * @param $duration
-     * @param string $parentKey Parent key that data is a dependent child of
+     * @param string|array $parentKey Parent key that data is a dependent child of
      * @return
      */
     private function _write($key, $value, $duration, $parentKey)
@@ -195,7 +200,12 @@ class RedisTreeEngine extends CacheEngine
         }
         $this->redis->multi();
         if (!empty($parentKey)) {
-            $this->_writeChildRelationship($parentKey, $key);
+            if (!is_array($parentKey)) {
+                $parentKey = [$parentKey];
+            }
+            foreach ($parentKey as $pk) {
+                $this->_writeChildRelationship($pk, $key);
+            }
         }
         if ($duration === 0) {
             $this->redis->set($key, $value);
