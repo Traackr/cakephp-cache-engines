@@ -50,10 +50,11 @@ class FileTreeEngine extends FileEngine
      * @param string $key
      * @param mixed $data
      * @param int $duration
+     * @param string $parentKey Parent key that data is a dependent child of
      * @return bool
      * @throws Exception
      */
-    public function write($key, $data, $duration)
+    public function write($key, $data, $duration, $parentKey = '')
     {
 
         //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code

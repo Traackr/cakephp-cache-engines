@@ -61,13 +61,13 @@ class FallbackEngine extends CacheEngine
 
     }
 
-    public function write($key, $value, $duration)
+    public function write($key, $value, $duration, $parentKey = '')
     {
         try {
-            return Cache::write($key, $value, $this->activeCache);
+            return Cache::write($key, $value, $this->activeCache, $parentKey);
         } catch (Exception $e) {
             $this->fallback();
-            return Cache::write($key, $value, $this->activeCache);
+            return Cache::write($key, $value, $this->activeCache, $parentKey);
         }
     }
 

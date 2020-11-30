@@ -121,11 +121,11 @@ class RedisTreeEngine extends CacheEngine
      * @param string $key Identifier for the data
      * @param mixed $value Data to be cached
      * @param integer $duration How long to cache the data, in seconds
-     * @param string $parentKey Parent key that data is a dependent child of
+     * @param string $parentKey Optional parent key that data is a dependent child of
      * @return bool True if the data was successfully cached, false on failure
      * @throws Exception
      */
-    public function write($key, $value, $duration, $parentKey)
+    public function write($key, $value, $duration, $parentKey = '')
     {
 
         // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
