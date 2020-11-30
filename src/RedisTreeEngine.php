@@ -486,7 +486,11 @@ class RedisTreeEngine extends CacheEngine
      */
     private function _getChildSetKey($parentKey)
     {
-        return $parentKey . ':child_keys';
+        $key = $parentKey . ':child_keys';
+        if (!empty($this->settings['prefix']) && strpos($key, $this->settings['prefix']) !== 0) {
+            $key = $this->settings['prefix'] . $key;
+        }
+        return $key;
     }
 
     /**
