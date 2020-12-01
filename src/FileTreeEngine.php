@@ -50,7 +50,7 @@ class FileTreeEngine extends FileEngine
      * @param string $key
      * @param mixed $data
      * @param int $duration
-     * @param string $parentKey Parent key that data is a dependent child of
+     * @param string|array $parentKey Unused.
      * @return bool
      * @throws Exception
      */
