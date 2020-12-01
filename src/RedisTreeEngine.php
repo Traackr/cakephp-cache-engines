@@ -346,7 +346,7 @@ class RedisTreeEngine extends CacheEngine
             $keys = $this->parseMultiKey($key);
 
             // dedupe keys before deletion
-            $keys = array_unique($keys);
+            $keys = array_values(array_unique($keys));
 
             return $this->_mdelete($keys);
         }
