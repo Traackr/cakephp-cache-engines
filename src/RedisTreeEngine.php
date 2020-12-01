@@ -345,6 +345,9 @@ class RedisTreeEngine extends CacheEngine
         if (strpos($key, '[') !== false && substr($key, -1) == ']') {
             $keys = $this->parseMultiKey($key);
 
+            // dedupe keys before deletion
+            $keys = array_unique($keys);
+
             return $this->_mdelete($keys);
         }
 
@@ -359,7 +362,7 @@ class RedisTreeEngine extends CacheEngine
      */
     private function _mdelete($keys)
     {
-        $finalKeys = array();
+        $finalKeys = [];
 
         foreach ($keys as $key) {
             // keys() is an expensive call; only call it if we need to (i.e. if there actually is a wildcard);
@@ -380,6 +383,9 @@ class RedisTreeEngine extends CacheEngine
                 $finalKeys = array_merge($finalKeys, $childKeys);
             }
         }
+
+        // dedupe keys before deletion
+        $finalKeys = array_unique($finalKeys);
 
         // Check if there are any key to delete
         if (!empty($finalKeys)) {
