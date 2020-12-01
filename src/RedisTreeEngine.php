@@ -150,7 +150,12 @@ class RedisTreeEngine extends CacheEngine
      * Internal multi-val write.
      * @param $key_value_array
      * @param $duration
-     * @param string|array $parentKey Parent key that data is a dependent child of
+     * @param string|array $parentKey Parent key that data is a dependent child of.
+     *                                If provided array is one dimensional or a string
+     *                                then the parent key(s) is applied to all keys.
+     *                                If provided array is two dimensional the parent
+     *                                keys are applied only to the key specified via
+     *                                the respective index.
      * @return
      */
     private function _mwrite($key_value_array, $duration, $parentKey)
@@ -170,8 +175,14 @@ class RedisTreeEngine extends CacheEngine
             if (!is_array($parentKey)) {
                 $parentKey = [$parentKey];
             }
-            foreach ($parentKey as $pk) {
-                $this->_writeChildRelationship($pk, ...$keys);
+            foreach ($parentKey as $k => $pk) {
+                if (is_array($pk)) {
+                    foreach ($pk as $keySpecificParentKey) {
+                        $this->_writeChildRelationship($keySpecificParentKey, $k);
+                    }
+                } else {
+                    $this->_writeChildRelationship($pk, ...$keys);
+                }
             }
         }
         if ($duration === 0) {
