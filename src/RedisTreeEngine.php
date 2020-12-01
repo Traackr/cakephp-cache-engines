@@ -419,6 +419,9 @@ class RedisTreeEngine extends CacheEngine
             $keys = array_merge($keys, $childKeys);
         }
 
+        // dedupe keys before deletion
+        $keys = array_unique($keys);
+
         // Check if there are any key to delete
         if (!empty($keys)) {
             return $this->redis->del($keys);
