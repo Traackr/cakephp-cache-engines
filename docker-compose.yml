@@ -1,0 +1,11 @@
+version: "3.7"
+services:
+  cakephp-cache-engines:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
+    container_name: cakephp-cache-engines
+    restart: always
+    volumes:
+      - ./:/app:rw
