@@ -385,7 +385,7 @@ class RedisTreeEngine extends CacheEngine
         }
 
         // dedupe keys before deletion
-        $finalKeys = array_unique($finalKeys);
+        $finalKeys = array_values(array_unique($finalKeys));
 
         // Check if there are any key to delete
         if (!empty($finalKeys)) {
@@ -420,7 +420,7 @@ class RedisTreeEngine extends CacheEngine
         }
 
         // dedupe keys before deletion
-        $keys = array_unique($keys);
+        $keys = array_values(array_unique($keys));
 
         // Check if there are any key to delete
         if (!empty($keys)) {
