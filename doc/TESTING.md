@@ -17,3 +17,11 @@ You are now ready to run the tests:
 ```bash
   $ bin/phpunit test
 ```
+
+The tests can also be ran using Docker with the following commands:
+
+```bash
+  $ make start-build
+  $ make run-composer-install
+  $ make run-unit-tests
+```

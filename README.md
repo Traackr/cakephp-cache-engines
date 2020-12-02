@@ -17,6 +17,7 @@ We currently provide three cache engines:
    $ cd /path/to/cake/application/app
    $ composer require traackr/cache-engines
    $ composer update
+   $ cp -r /path/to/cake/application/app/Plugin/cache-engines/Lib /path/to/cake/application/app/
    ```
 
 ##Configuring the Engines
