@@ -50,11 +50,10 @@ class FileTreeEngine extends FileEngine
      * @param string $key
      * @param mixed $data
      * @param int $duration
-     * @param string|array $parentKey Unused.
      * @return bool
      * @throws Exception
      */
-    public function write($key, $data, $duration, $parentKey = '')
+    public function write($key, $data, $duration)
     {
 
         //combo keys will be of the form: prefix_[blah,blah]; prefix is prepended by internal Cake code
@@ -87,6 +86,25 @@ class FileTreeEngine extends FileEngine
 
         return parent::write($key, $data, $duration);
 
+    }
+
+    /**
+     * 'Parents' are not supported by the FileTreeEngine.
+     * This method performs same action as `write`.
+     *
+     * This method exists to gracefully degrade when using
+     * this engine as a fallback to the RedisTreeEngine.
+     *
+     * @param string $key
+     * @param mixed $data
+     * @param int $duration
+     * @param string|array $parentKey Unused.
+     * @return bool
+     * @throws Exception
+     */
+    public function writeWithParent($key, $data, $duration, $parentKey = '')
+    {
+        return $this->write($key, $data, $duration);
     }
 
 

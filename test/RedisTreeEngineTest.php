@@ -208,11 +208,11 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
     }
 
 
-    public function testMultiWriteReadDeleteWithSharedParent()
+    public function testWriteWithParentReadDeleteWithSharedParent()
     {
 
-        $key1 = 'RedisTreeEngine:testMultiWriteReadDeleteWithSharedParent:1';
-        $key2 = 'RedisTreeEngine:testMultiWriteReadDeleteWithSharedParent:2';
+        $key1 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithSharedParent:1';
+        $key2 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithSharedParent:2';
         $multiKey = '[' . $key1 . ',' . $key2 . ']';
 
         $parentKey = 'RedisTreeEngine:TestParent:-1';
@@ -224,7 +224,7 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
             $value2
         );
 
-        CacheMock::write($multiKey, $values, $this->cache, $parentKey);
+        CacheEnginesHelper::writeWithParent($multiKey, $values, $this->cache, $parentKey);
 
         $multiVal = CacheMock::read($multiKey, $this->cache);
 
@@ -241,11 +241,11 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
     }
 
 
-    public function testMultiWriteReadDeleteWithSharedParents()
+    public function testWriteWithParentReadDeleteWithSharedParents()
     {
 
-        $key1 = 'RedisTreeEngine:testMultiWriteReadDeleteWithSharedParents:1';
-        $key2 = 'RedisTreeEngine:testMultiWriteReadDeleteWithSharedParents:2';
+        $key1 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithSharedParents:1';
+        $key2 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithSharedParents:2';
         $multiKey = '[' . $key1 . ',' . $key2 . ']';
 
         $parentKeys = [
@@ -260,7 +260,7 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
             $value2
         );
 
-        CacheMock::write($multiKey, $values, $this->cache, $parentKeys);
+        CacheEnginesHelper::writeWithParent($multiKey, $values, $this->cache, $parentKeys);
 
         $multiVal = CacheMock::read($multiKey, $this->cache);
 
@@ -277,11 +277,11 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
     }
 
 
-    public function testMultiWriteReadDeleteWithUnqiueParents()
+    public function testWriteWithParentReadDeleteWithUnqiueParents()
     {
 
-        $key1 = 'RedisTreeEngine:testMultiWriteReadDeleteWithSharedParents:1';
-        $key2 = 'RedisTreeEngine:testMultiWriteReadDeleteWithSharedParents:2';
+        $key1 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUnqiueParents:1';
+        $key2 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUnqiueParents:2';
         $multiKey = '[' . $key1 . ',' . $key2 . ']';
 
         $parentKeys = [
@@ -302,7 +302,7 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
             $value2
         );
 
-        CacheMock::write($multiKey, $values, $this->cache, $parentKeys);
+        CacheEnginesHelper::writeWithParent($multiKey, $values, $this->cache, $parentKeys);
 
         $multiVal = CacheMock::read($multiKey, $this->cache);
 
@@ -319,16 +319,16 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
     }
 
 
-    public function testWriteDeleteWithParent()
+    public function testWriteWithParentDeleteWithParent()
     {
 
-        $key1 = 'RedisTreeEngine:testWriteDeleteWithParent:1';
+        $key1 = 'RedisTreeEngine:testWriteWithParentDeleteWithParent:1';
         $parentKey = 'RedisTreeEngine:TestParent:30';
         $value = date('Y-m-d h:m');
-        CacheMock::write($key1, $value, $this->cache, $parentKey);
+        CacheEnginesHelper::writeWithParent($key1, $value, $this->cache, $parentKey);
         $this->assertEquals($value, CacheMock::read($key1, $this->cache));
 
-        $key2 = 'RedisTreeEngine:testWriteDeleteWithParent:2';
+        $key2 = 'RedisTreeEngine:testWriteWithParentDeleteWithParent:2';
         $value2 = date('Y-m-d h:m');
         CacheMock::write($key2, $value2, $this->cache);
 
@@ -338,18 +338,18 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
     }
 
 
-    public function testWriteDeleteWithParents()
+    public function testWriteWithParentDeleteWithParents()
     {
-        $key = 'RedisTreeEngine:testWriteDeleteWithParents:1';
+        $key = 'RedisTreeEngine:testWriteWithParentDeleteWithParents:1';
         $parentKeys = [
             'RedisTreeEngine:TestParent:40',
             'RedisTreeEngine:TestParent:50'
         ];
         $value = date('Y-m-d h:m');
-        CacheMock::write($key, $value, $this->cache, $parentKeys);
+        CacheEnginesHelper::writeWithParent($key, $value, $this->cache, $parentKeys);
         $this->assertEquals($value, CacheMock::read($key, $this->cache));
 
-        $key2 = 'RedisTreeEngine:testWriteDeleteWithParents:2';
+        $key2 = 'RedisTreeEngine:testWriteWithParentDeleteWithParents:2';
         $value2 = date('Y-m-d h:m');
         CacheMock::write($key2, $value2, $this->cache);
 
