@@ -1,4 +1,4 @@
-FROM php:5.6.30-fpm-alpine
+FROM php:7.1-fpm-alpine
 RUN apk update && apk add build-base
 RUN apk add zlib-dev git zip libmcrypt-dev \
   && docker-php-ext-install zip \
