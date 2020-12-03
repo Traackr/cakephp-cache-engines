@@ -15,7 +15,9 @@ require_once(dirname(__FILE__) . '/../vendor/cakephp/cakephp/lib/Cake/Cache/Cach
 require_once(dirname(__FILE__) . '/../vendor/cakephp/cakephp/lib/Cake/Cache/CacheEngine.php');
 require_once(dirname(__FILE__) . '/../vendor/cakephp/cakephp/lib/Cake/Cache/Engine/FileEngine.php');
 
+
 // Load all engines
+require_once(dirname(__FILE__) . '/../src/CacheEnginesHelper.php');
 require_once(dirname(__FILE__) . '/../src/Engines.php');
 // Load mock classes for unit tests
 require_once(dirname(__FILE__) . '/RedisTreeMockEngine.php');

@@ -31,6 +31,8 @@ class RedisTreeEngine extends CacheEngine
      */
     public $settings = array();
 
+    private $_childSetKeySuffix = ':child_keys';
+
     /**
      * Initialize the Cache Engine
      *
@@ -114,7 +116,6 @@ class RedisTreeEngine extends CacheEngine
         return $key;
 
     }
-
     /**
      * Write data for key into cache.
      *
@@ -126,48 +127,70 @@ class RedisTreeEngine extends CacheEngine
      */
     public function write($key, $value, $duration)
     {
-
-        // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
-        // a prefix configured by the user or left as null.
-        if (strpos($key, '[') !== false && substr($key, -1) == ']') {
-            $keys = $this->parseMultiKey($key);
-
-            if (count($keys) != count($value)) {
-                throw new Exception('Num keys != num values.');
-            }
-            $key_vals = array_combine($keys, $value);
-
-            return $this->_mwrite($key_vals, $duration);
-        }
-
         return $this->_write($key, $value, $duration);
+    }
+
+    /**
+     * Write data for key into a cache engine with one or more 'parent'.
+     *
+     * @param string $key Identifier for the data
+     * @param mixed $value Data to be cached
+     * @param integer $duration How long to cache the data, in seconds
+     * @param string|array $parentKey parent key that data is a dependent child of
+     * @return bool True if the data was successfully cached, false on failure
+     * @throws Exception
+     */
+    public function writeWithParent($key, $value, $duration, $parentKey = '')
+    {
+        return $this->_write($key, $value, $duration, $parentKey);
     }
 
     /**
      * Internal multi-val write.
      * @param $key_value_array
      * @param $duration
+     * @param string|array $parentKey Parent key that data is a dependent child of.
+     *                                If provided array is one dimensional or a string
+     *                                then the parent key(s) is applied to all keys.
+     *                                If provided array is two dimensional the parent
+     *                                keys are applied only to the key specified via
+     *                                the respective index.
      * @return
      */
-    private function _mwrite($key_value_array, $duration)
+    private function _mwrite($key_value_array, $duration, $parentKey = '')
     {
 
         foreach ($key_value_array as $key => &$value) {
             if (!is_int($value)) {
                 $value = serialize($value);
             }
-
         }
         unset($value);
 
-        if ($duration === 0) {
-            return $this->redis->mset($key_value_array);
-        }
+        $keys = array_keys($key_value_array);
 
-        //note that there is no "msetex" in redis! must do this in a more convoluted way:
         $this->redis->multi();
-        foreach ($key_value_array as $key => $value) {
-            $this->redis->setex($key, $duration, $value);
+        if (!empty($parentKey)) {
+            if (!is_array($parentKey)) {
+                $parentKey = [$parentKey];
+            }
+            foreach ($parentKey as $k => $pk) {
+                if (is_array($pk)) {
+                    foreach ($pk as $keySpecificParentKey) {
+                        $this->_writeChildRelationship($keySpecificParentKey, $k);
+                    }
+                } else {
+                    $this->_writeChildRelationship($pk, ...$keys);
+                }
+            }
+        }
+        if ($duration === 0) {
+            $this->redis->mset($key_value_array);
+        } else {
+            // note that there is no "msetex" in redis! must do this in a more convoluted way:
+            foreach ($key_value_array as $key => $value) {
+                $this->redis->setex($key, $duration, $value);
+            }
         }
         return $this->redis->exec();
 
@@ -178,20 +201,59 @@ class RedisTreeEngine extends CacheEngine
      * @param $key
      * @param $value
      * @param $duration
+     * @param string|array $parentKey Parent key that data is a dependent child of
      * @return
      */
-    private function _write($key, $value, $duration)
+    private function _swrite($key, $value, $duration, $parentKey = '')
     {
 
         if (!is_int($value)) {
             $value = serialize($value);
         }
+        $this->redis->multi();
+        if (!empty($parentKey)) {
+            if (!is_array($parentKey)) {
+                $parentKey = [$parentKey];
+            }
+            foreach ($parentKey as $pk) {
+                $this->_writeChildRelationship($pk, $key);
+            }
+        }
         if ($duration === 0) {
-            return $this->redis->set($key, $value);
+            $this->redis->set($key, $value);
+        } else {
+            $this->redis->setex($key, $duration, $value);
+        }
+        return $this->redis->exec();
+    }
+
+    /**
+     * Internal write.
+     * Write data for key into a cache engine with or without parents.
+     *
+     * @param string $key Identifier for the data
+     * @param mixed $value Data to be cached
+     * @param integer $duration How long to cache the data, in seconds
+     * @param string|array $parentKey Optional parent key that data is a dependent child of
+     * @return bool True if the data was successfully cached, false on failure
+     * @throws Exception
+     */
+    private function _write($key, $value, $duration, $parentKey = '')
+    {
+        // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
+        // a prefix configured by the user or left as null.
+        if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+            $keys = $this->parseMultiKey($key);
+
+            if (count($keys) != count($value)) {
+                throw new Exception('Num keys != num values.');
+            }
+            $key_vals = array_combine($keys, $value);
+
+            return $this->_mwrite($key_vals, $duration, $parentKey);
         }
 
-        return $this->redis->setex($key, $duration, $value);
-
+        return $this->_swrite($key, $value, $duration, $parentKey);
     }
 
     /**
@@ -311,6 +373,9 @@ class RedisTreeEngine extends CacheEngine
         if (strpos($key, '[') !== false && substr($key, -1) == ']') {
             $keys = $this->parseMultiKey($key);
 
+            // dedupe keys before deletion
+            $keys = array_values(array_unique($keys));
+
             return $this->_mdelete($keys);
         }
 
@@ -325,28 +390,30 @@ class RedisTreeEngine extends CacheEngine
      */
     private function _mdelete($keys)
     {
-        $finalKeys = array();
+        $finalKeys = [];
 
         foreach ($keys as $key) {
             // keys() is an expensive call; only call it if we need to (i.e. if there actually is a wildcard);
             // the chars "?*[" seem to be the right ones to listen for according to: http://redis.io/commands/KEYS
             if (preg_match('/[\?\*\[]/', $key)) {
-
                 if ($this->supportsScan) {
                     $currKeys = array();
                     foreach (new Iterator\Keyspace($this->redis, $key, $this->scanCount) as $currKey) {
                         $currKeys[] = $currKey;
                     }
                     $finalKeys = array_merge($finalKeys, $currKeys);
-                }
-                else {
+                } else {
                     $finalKeys = array_merge($finalKeys, $this->redis->keys($key));
                 }
-            }
-            else {
+            } else {
                 $finalKeys[] = $key;
+                $childKeys = $this->_getChildKeys($key);
+                $finalKeys = array_merge($finalKeys, $childKeys);
             }
         }
+
+        // dedupe keys before deletion
+        $finalKeys = array_values(array_unique($finalKeys));
 
         // Check if there are any key to delete
         if (!empty($finalKeys)) {
@@ -371,14 +438,17 @@ class RedisTreeEngine extends CacheEngine
                 foreach (new Iterator\Keyspace($this->redis, $key, $this->scanCount) as $currKey) {
                     $keys[] = $currKey;
                 }
-            }
-            else {
+            } else {
                 $keys = $this->redis->keys($key);
             }
-        }
-        else {
+        } else {
             $keys = array($key);
+            $childKeys = $this->_getChildKeys($key);
+            $keys = array_merge($keys, $childKeys);
         }
+
+        // dedupe keys before deletion
+        $keys = array_values(array_unique($keys));
 
         // Check if there are any key to delete
         if (!empty($keys)) {
@@ -407,8 +477,7 @@ class RedisTreeEngine extends CacheEngine
             foreach (new Iterator\Keyspace($this->redis, $this->settings['prefix'] . '*', $this->scanCount) as $currKey) {
                 $keys[] = $currKey;
             }
-        }
-        else {
+        } else {
             $keys = $this->redis->keys($this->settings['prefix'] . '*');
         }
         $this->redis->del($keys);
@@ -466,5 +535,53 @@ class RedisTreeEngine extends CacheEngine
         }
 
         return $keys;
+    }
+
+    /**
+     * Get the key used to store the set of child keys.
+     *
+     * @param string $parentKey The key to get the child set key for
+     *
+     * @return string The child set's key
+     */
+    private function _getChildSetKey($parentKey)
+    {
+        $key = $parentKey . $this->_childSetKeySuffix;
+        if (!empty($this->settings['prefix']) && strpos($key, $this->settings['prefix']) !== 0) {
+            $key = $this->settings['prefix'] . $key;
+        }
+        return $key;
+    }
+
+    /**
+     * Record a key(s) dependent association to another key.
+     *
+     * @param string $parentKey    The key the children as associated to
+     * @param string ...$childKeys The children to associate
+     *
+     * @return int number of keys added to set
+     */
+    private function _writeChildRelationship($parentKey, ...$childKeys)
+    {
+        $setKey = $this->_getChildSetKey($parentKey);
+        return $this->redis->sadd($setKey, ...$childKeys);
+    }
+
+    /**
+     * Get the child keys of a given key.
+     *
+     * @param string $parentKey The key the children are associated to
+     *
+     * @return array The child keys, including the child set key.
+     */
+    private function _getChildKeys($parentKey)
+    {
+        $setKey = $this->_getChildSetKey($parentKey);
+        if ($this->redis->type($setKey) === 'set') {
+            $keys = $this->redis->smembers($setKey);
+            array_push($keys, $setKey);
+            return $keys;
+        }
+        return [];
     }
 }

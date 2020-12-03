@@ -71,6 +71,21 @@ class FallbackEngine extends CacheEngine
         }
     }
 
+    /**
+     * Write data for key into a cache engine with one or more 'parent'.
+     *
+     * @param string $key Identifier for the data
+     * @param mixed $value Data to be cached
+     * @param integer $duration How long to cache the data, in seconds
+     * @param string|array $parentKey Parent key that data is a dependent child of
+     * @return bool True if the data was successfully cached, false on failure
+     * @throws Exception
+     */
+    public function writeWithParent($key, $value, $duration, $parentKey = '')
+    {
+        return Cache::engine($this->activeCache)->writeWithParent($key, $value, $duration, $parentKey);
+    }
+
     public function read($key)
     {
         try {
@@ -129,5 +144,10 @@ class FallbackEngine extends CacheEngine
         } else {
             $this->activeCache = $this->secondaryConfig;
         }
+    }
+
+    public function key($key)
+    {
+        return Cache::engine($this->activeCache)->key($key);
     }
 }
