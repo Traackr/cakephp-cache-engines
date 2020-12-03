@@ -150,4 +150,9 @@ class FallbackEngine extends CacheEngine
     {
         return Cache::engine($this->activeCache)->key($key);
     }
+
+    public function getActiveCacheSettings()
+    {
+        return Cache::engine($this->activeCache)->settings();
+    }
 }
