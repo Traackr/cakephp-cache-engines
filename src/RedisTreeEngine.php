@@ -116,33 +116,32 @@ class RedisTreeEngine extends CacheEngine
         return $key;
 
     }
-
     /**
      * Write data for key into cache.
      *
      * @param string $key Identifier for the data
      * @param mixed $value Data to be cached
      * @param integer $duration How long to cache the data, in seconds
-     * @param string|array $parentKey Optional parent key that data is a dependent child of
      * @return bool True if the data was successfully cached, false on failure
      * @throws Exception
      */
-    public function write($key, $value, $duration, $parentKey = '')
+    public function write($key, $value, $duration)
     {
+        return $this->_write($key, $value, $duration);
+    }
 
-        // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
-        // a prefix configured by the user or left as null.
-        if (strpos($key, '[') !== false && substr($key, -1) == ']') {
-            $keys = $this->parseMultiKey($key);
-
-            if (count($keys) != count($value)) {
-                throw new Exception('Num keys != num values.');
-            }
-            $key_vals = array_combine($keys, $value);
-
-            return $this->_mwrite($key_vals, $duration, $parentKey);
-        }
-
+    /**
+     * Write data for key into a cache engine with one or more 'parent'.
+     *
+     * @param string $key Identifier for the data
+     * @param mixed $value Data to be cached
+     * @param integer $duration How long to cache the data, in seconds
+     * @param string|array $parentKey parent key that data is a dependent child of
+     * @return bool True if the data was successfully cached, false on failure
+     * @throws Exception
+     */
+    public function writeWithParent($key, $value, $duration, $parentKey = '')
+    {
         return $this->_write($key, $value, $duration, $parentKey);
     }
 
@@ -158,7 +157,7 @@ class RedisTreeEngine extends CacheEngine
      *                                the respective index.
      * @return
      */
-    private function _mwrite($key_value_array, $duration, $parentKey)
+    private function _mwrite($key_value_array, $duration, $parentKey = '')
     {
 
         foreach ($key_value_array as $key => &$value) {
@@ -205,7 +204,7 @@ class RedisTreeEngine extends CacheEngine
      * @param string|array $parentKey Parent key that data is a dependent child of
      * @return
      */
-    private function _write($key, $value, $duration, $parentKey)
+    private function _swrite($key, $value, $duration, $parentKey = '')
     {
 
         if (!is_int($value)) {
@@ -226,6 +225,35 @@ class RedisTreeEngine extends CacheEngine
             $this->redis->setex($key, $duration, $value);
         }
         return $this->redis->exec();
+    }
+
+    /**
+     * Internal write.
+     * Write data for key into a cache engine with or without parents.
+     *
+     * @param string $key Identifier for the data
+     * @param mixed $value Data to be cached
+     * @param integer $duration How long to cache the data, in seconds
+     * @param string|array $parentKey Optional parent key that data is a dependent child of
+     * @return bool True if the data was successfully cached, false on failure
+     * @throws Exception
+     */
+    private function _write($key, $value, $duration, $parentKey = '')
+    {
+        // Cake's Redis cache engine sets a default prefix of null. We'll need to handle both
+        // a prefix configured by the user or left as null.
+        if (strpos($key, '[') !== false && substr($key, -1) == ']') {
+            $keys = $this->parseMultiKey($key);
+
+            if (count($keys) != count($value)) {
+                throw new Exception('Num keys != num values.');
+            }
+            $key_vals = array_combine($keys, $value);
+
+            return $this->_mwrite($key_vals, $duration, $parentKey);
+        }
+
+        return $this->_swrite($key, $value, $duration, $parentKey);
     }
 
     /**

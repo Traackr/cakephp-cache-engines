@@ -61,14 +61,29 @@ class FallbackEngine extends CacheEngine
 
     }
 
-    public function write($key, $value, $duration, $parentKey = '')
+    public function write($key, $value, $duration)
     {
         try {
-            return Cache::write($key, $value, $this->activeCache, $parentKey);
+            return Cache::write($key, $value, $this->activeCache);
         } catch (Exception $e) {
             $this->fallback();
-            return Cache::write($key, $value, $this->activeCache, $parentKey);
+            return Cache::write($key, $value, $this->activeCache);
         }
+    }
+
+    /**
+     * Write data for key into a cache engine with one or more 'parent'.
+     *
+     * @param string $key Identifier for the data
+     * @param mixed $value Data to be cached
+     * @param integer $duration How long to cache the data, in seconds
+     * @param string|array $parentKey Parent key that data is a dependent child of
+     * @return bool True if the data was successfully cached, false on failure
+     * @throws Exception
+     */
+    public function writeWithParent($key, $value, $duration, $parentKey = '')
+    {
+        return Cache::engine($this->activeCache)->writeWithParent($key, $value, $duration, $parentKey);
     }
 
     public function read($key)
