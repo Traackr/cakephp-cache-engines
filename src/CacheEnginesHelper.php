@@ -80,7 +80,12 @@ class CacheEnginesHelper
         $config = 'default',
         $parentKey = ''
     ) {
-        $settings = Cache::settings($config);
+
+        if (method_exists(Cache::engine($config), 'getActiveCacheSettings')) {
+            $settings = Cache::engine($config)->getActiveCacheSettings();
+        } else {
+            $settings = Cache::settings($config);
+        }
 
         if (empty($settings)) {
             return false;
