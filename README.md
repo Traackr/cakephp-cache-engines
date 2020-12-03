@@ -6,8 +6,8 @@ This CakePHP plugin provides some additional cache engines that can be used by C
 
 We currently provide three cache engines:
 
-1. RedisTreeCacheEngine: Redis based cache that supports managing keys using wildcards
-2. FileTreeCacheEngine: Local filesystem based cache that supports managing keys using wildcards
+1. RedisTreeCacheEngine: Redis based cache that supports managing keys using wildcards and cache key 'parents'.
+2. FileTreeCacheEngine: Local filesystem based cache that supports managing keys using wildcards and cache key 'parents'.
 3. FallBackCacheEngine: Allows you to define two cache engines; the first engine is used as the primary cache engine.
    The second cache engine is used only if the primary fails.
 
@@ -17,7 +17,6 @@ We currently provide three cache engines:
    $ cd /path/to/cake/application/app
    $ composer require traackr/cache-engines
    $ composer update
-   $ cp -r /path/to/cake/application/app/Plugin/cache-engines/Lib /path/to/cake/application/app/
    ```
 
 ##Configuring the Engines
