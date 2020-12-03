@@ -6,35 +6,6 @@ require_once dirname(__FILE__) . '/../src/Engines.php';
 class CacheEnginesHelperTest extends \PHPUnit\Framework\TestCase
 {
 
-
-    private $cache = 'RedisTree';
-
-    public function setUp()
-    {
-
-        // Comment this to use real redis server
-        /**/
-
-        /**/
-
-        // Uncomment this to use real redis server
-        /*
-         CacheMock::config($this->cache, array(
-            'engine' => 'RedisTree',
-            'duration' => 4
-         ));
-        /**/
-
-
-    }
-
-
-    public function tearDown()
-    {
-
-
-    }
-
     public function testWriteWithParent()
     {
         // use RedisTreeEngine, which supports writeWithParent
