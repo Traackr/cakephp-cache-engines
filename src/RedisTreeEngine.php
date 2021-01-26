@@ -147,14 +147,36 @@ class RedisTreeEngine extends CacheEngine
 
     /**
      * Internal multi-val write.
+     *
+     * $parentKey supports the following structures:
+     * - the same parent for all keys
+     *      'sharedParent1'
+     * - the same parents for all keys
+     *      [
+     *          'sharedParent1',
+     *          'sharedParent2'
+     *      ]
+     * - a single unique parent per key
+     * [
+     *     'key1' => 'uniqueParent1',
+     *     'key2' => 'uniqueParent2'
+     * ]
+     * - multiple unique parents per key
+     * [
+     *     'key1' => [
+     *         'uniqueParent1',
+     *         'uniqueParent2',
+     *     ]
+     *     'key2' => [
+     *         'uniqueParent3',
+     *         'uniqueParent4',
+     *     ]
+     * ]
+     *
      * @param $key_value_array
      * @param $duration
      * @param string|array $parentKey Parent key that data is a dependent child of.
-     *                                If provided array is one dimensional or a string
-     *                                then the parent key(s) is applied to all keys.
-     *                                If provided array is two dimensional the parent
-     *                                keys are applied only to the key specified via
-     *                                the respective index.
+     *
      * @return
      */
     private function _mwrite($key_value_array, $duration, $parentKey = '')
