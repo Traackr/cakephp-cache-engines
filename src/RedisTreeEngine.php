@@ -157,21 +157,21 @@ class RedisTreeEngine extends CacheEngine
      *          'sharedParent2'
      *      ]
      * - a single unique parent per key
-     * [
-     *     'key1' => 'uniqueParent1',
-     *     'key2' => 'uniqueParent2'
-     * ]
+     *      [
+     *          'key1' => 'uniqueParent1',
+     *          'key2' => 'uniqueParent2'
+     *      ]
      * - multiple unique parents per key
-     * [
-     *     'key1' => [
-     *         'uniqueParent1',
-     *         'uniqueParent2',
-     *     ]
-     *     'key2' => [
-     *         'uniqueParent3',
-     *         'uniqueParent4',
-     *     ]
-     * ]
+     *      [
+     *          'key1' => [
+     *              'uniqueParent1',
+     *              'uniqueParent2',
+     *          ]
+     *          'key2' => [
+     *              'uniqueParent3',
+     *              'uniqueParent4',
+     *          ]
+     *      ]
      *
      * @param $key_value_array
      * @param $duration
