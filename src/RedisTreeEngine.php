@@ -171,17 +171,30 @@ class RedisTreeEngine extends CacheEngine
 
         $this->redis->multi();
         if (!empty($parentKey)) {
-            if (!is_array($parentKey)) {
-                $parentKey = [$parentKey];
-            }
-            foreach ($parentKey as $k => $pk) {
-                if (is_array($pk)) {
-                    foreach ($pk as $keySpecificParentKey) {
-                        $this->_writeChildRelationship($keySpecificParentKey, $k);
+            if (is_array($parentKey)) {
+                if (array_keys($parentKey) === range(0, count($parentKey) - 1)) {
+                    // it's a numeric array (same parents for all keys)
+                    foreach ($parentKey as $pk) {
+                        $this->_writeChildRelationship($pk, ...$keys);
                     }
                 } else {
-                    $this->_writeChildRelationship($pk, ...$keys);
+                    // it's an associative array (unique parents per key)
+                    foreach ($parentKey as $k => $pk) {
+                        if (is_array($pk)) {
+                            foreach ($pk as $keySpecificParentKey) {
+                                $this->_writeChildRelationship(
+                                    $keySpecificParentKey,
+                                    $k
+                                );
+                            }
+                        } else {
+                            $this->_writeChildRelationship($pk, $k);
+                        }
+                    }
                 }
+            } else {
+                // it's only one parent key for all keys
+                $this->_writeChildRelationship($parentKey, ...$keys);
             }
         }
         if ($duration === 0) {
