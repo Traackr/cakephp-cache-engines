@@ -298,11 +298,11 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
     }
 
 
-    public function testWriteWithParentReadDeleteWithUnqiueParents()
+    public function testWriteWithParentReadDeleteWithUniqueParents()
     {
 
-        $key1 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUnqiueParents:1';
-        $key2 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUnqiueParents:2';
+        $key1 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUniqueParents:1';
+        $key2 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUniqueParents:2';
         $multiKey = '[' . $key1 . ',' . $key2 . ']';
 
         $parentKeys = [
@@ -347,10 +347,10 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
     }
 
 
-    public function testWriteWithParentReadDeleteWithUnqiueParent()
+    public function testWriteWithParentReadDeleteWithUniqueParent()
     {
-        $key1 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUnqiueParent:1';
-        $key2 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUnqiueParent:2';
+        $key1 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUniqueParent:1';
+        $key2 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUniqueParent:2';
         $multiKey = '[' . $key1 . ',' . $key2 . ']';
 
         $parentKeys = [
