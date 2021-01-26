@@ -8,6 +8,7 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
 
 
     private $cache = 'RedisTree';
+    private $redisMock;
 
     public function setUp()
     {
@@ -15,12 +16,12 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
         // Comment this to use real redis server
         /**/
         $factory = new \M6Web\Component\RedisMock\RedisMockFactory();
-        $redisMock = $factory->getAdapter('Predis\Client', true);
+        $this->redisMock = $factory->getAdapter('Predis\Client', true);
         CacheMock::config($this->cache, array(
             'engine' => 'RedisTreeMock',
             'duration' => 4
         ));
-        CacheMock::setEngine($this->cache, $redisMock);
+        CacheMock::setEngine($this->cache, $this->redisMock);
         /**/
 
         // Uncomment this to use real redis server
@@ -235,6 +236,15 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
         $second = $multiVal[1];
         $this->assertEquals($second, $value2);
 
+        $childKeys = $this->redisMock->smembers($parentKey . ':child_keys');
+        $this->assertEquals(
+            [
+                $key1,
+                $key2
+            ],
+            $childKeys
+        );
+
         CacheMock::delete($parentKey, $this->cache);
         $this->assertNull(CacheMock::read($key1, $this->cache), 'Key 1 is deleted');
         $this->assertNull(CacheMock::read($key2, $this->cache), 'Key 2 is deleted');
@@ -271,17 +281,28 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
         $second = $multiVal[1];
         $this->assertEquals($second, $value2);
 
+        foreach ($parentKeys as $pk) {
+            $childKeys = $this->redisMock->smembers($pk . ':child_keys');
+            $this->assertEquals(
+                [
+                    $key1,
+                    $key2
+                ],
+                $childKeys
+            );
+        }
+
         CacheMock::delete($parentKeys[0], $this->cache);
         $this->assertNull(CacheMock::read($key1, $this->cache), 'Key 1 is deleted');
         $this->assertNull(CacheMock::read($key2, $this->cache), 'Key 2 is deleted');
     }
 
 
-    public function testWriteWithParentReadDeleteWithUnqiueParents()
+    public function testWriteWithParentReadDeleteWithUniqueParents()
     {
 
-        $key1 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUnqiueParents:1';
-        $key2 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUnqiueParents:2';
+        $key1 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUniqueParents:1';
+        $key2 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUniqueParents:2';
         $multiKey = '[' . $key1 . ',' . $key2 . ']';
 
         $parentKeys = [
@@ -313,7 +334,59 @@ class RedisTreeEngineTest extends \PHPUnit\Framework\TestCase
         $second = $multiVal[1];
         $this->assertEquals($second, $value2);
 
+        foreach ($parentKeys as $key => $pks) {
+            foreach ($pks as $pk) {
+                $childKeys = $this->redisMock->smembers($pk . ':child_keys');
+                $this->assertEquals([$key], $childKeys);
+            }
+        }
+
         CacheMock::delete($parentKeys[$key2][1], $this->cache);
+        $this->assertNotNull(CacheMock::read($key1, $this->cache), 'Key 1 is not deleted');
+        $this->assertNull(CacheMock::read($key2, $this->cache), 'Key 2 is deleted');
+    }
+
+
+    public function testWriteWithParentReadDeleteWithUniqueParent()
+    {
+        $key1 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUniqueParent:1';
+        $key2 = 'RedisTreeEngine:testWriteWithParentReadDeleteWithUniqueParent:2';
+        $multiKey = '[' . $key1 . ',' . $key2 . ']';
+
+        $parentKeys = [
+            $key1 => 'RedisTreeEngine:TestParent:100',
+            $key2 => 'RedisTreeEngine:TestParent:210'
+        ];
+
+        $value1 = date('Y-m-d h:m') . ':1';
+        $value2 = date('Y-m-d h:m') . ':2';
+        $values = array(
+            $value1,
+            $value2
+        );
+
+        CacheEnginesHelper::writeWithParent(
+            $multiKey,
+            $values,
+            $this->cache,
+            $parentKeys
+        );
+
+        $multiVal = CacheMock::read($multiKey, $this->cache);
+
+        $this->assertInternalType('array', $multiVal);
+        $this->assertEquals(2, count($multiVal));
+        $first = $multiVal[0];
+        $this->assertEquals($first, $value1);
+        $second = $multiVal[1];
+        $this->assertEquals($second, $value2);
+
+        $childKeys = $this->redisMock->smembers($parentKeys[$key1] . ':child_keys');
+        $this->assertEquals([$key1], $childKeys);
+        $childKeys = $this->redisMock->smembers($parentKeys[$key2] . ':child_keys');
+        $this->assertEquals([$key2], $childKeys);
+
+        CacheMock::delete($parentKeys[$key2], $this->cache);
         $this->assertNotNull(CacheMock::read($key1, $this->cache), 'Key 1 is not deleted');
         $this->assertNull(CacheMock::read($key2, $this->cache), 'Key 2 is deleted');
     }
