@@ -573,6 +573,21 @@ class RedisTreeEngine extends CacheEngine
     }
 
     /**
+     * Ensure prefix defined in settings is prepended to key.
+     * @param string $key
+     * @return string
+     */
+    private function _addKeyPrefix($key)
+    {
+        if (!empty($this->settings['prefix'])
+            && strpos($key, $this->settings['prefix']) !== 0
+        ) {
+            $key = $this->settings['prefix'] . $key;
+        }
+        return $key;
+    }
+
+    /**
      * Get the key used to store the set of child keys.
      *
      * @param string $parentKey The key to get the child set key for
@@ -582,9 +597,8 @@ class RedisTreeEngine extends CacheEngine
     private function _getChildSetKey($parentKey)
     {
         $key = $parentKey . $this->_childSetKeySuffix;
-        if (!empty($this->settings['prefix']) && strpos($key, $this->settings['prefix']) !== 0) {
-            $key = $this->settings['prefix'] . $key;
-        }
+        // ensure prefix is included
+        $key = $this->_addKeyPrefix($key);
         return $key;
     }
 
@@ -599,6 +613,10 @@ class RedisTreeEngine extends CacheEngine
     private function _writeChildRelationship($parentKey, ...$childKeys)
     {
         $setKey = $this->_getChildSetKey($parentKey);
+        // ensure all child keys include prefix
+        foreach ($childKeys as $index => $key) {
+            $childKeys[$index] = $this->_addKeyPrefix($key);
+        }
         return $this->redis->sadd($setKey, ...$childKeys);
     }
 
